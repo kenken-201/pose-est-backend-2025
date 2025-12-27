@@ -56,9 +56,9 @@
 
 | カテゴリ         | 技術                                   | 解説                                      |
 | :--------------- | :------------------------------------- | :---------------------------------------- |
-| **Language**     | **Python 3.14.2**                      | 型ヒント機能をフル活用                    |
+| **Language**     | **Python 3.11.14**                     | 型ヒント機能をフル活用                    |
 | **Framework**    | **FastAPI 0.127.1**                    | 高速、型安全、モダンな Web フレームワーク |
-| **ML Core**      | **TensorFlow 2.19.1 / TensorFlow Hub** | Google MoveNet モデルの実行               |
+| **ML Core**      | **TensorFlow 2.18.1 / TensorFlow Hub** | Google MoveNet モデルの実行               |
 | **Image Proc**   | **OpenCV 4.12.0**                      | 動画フレームの切り出しと描画              |
 | **Architecture** | **Clean Architecture**                 | 依存性の方向を内側に保つ                  |
 | **Testing**      | **pytest 9.0.2, pytest-asyncio 1.3.0** | 非同期対応テストフレームワーク            |
