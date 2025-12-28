@@ -26,13 +26,13 @@
 
 ## 🏗️ フェーズ 2: 抽象・インターフェース設計 (Domain Layer)
 
-### ⬜ タスク 2-1: ドメインモデルとインターフェースの設計
+### ✅ タスク 2-1: ドメインモデルとインターフェースの設計
 
 - **Goal**: ビジネスロジックの核となる型と契約の定義
-- [ ] Value Objects 設計 (`Keypoint`, `VideoMeta`)
-- [ ] Entity/Aggregate 設計 (`Pose`, `AnalyzedVideo`)
-- [ ] Domain Interfaces 設計 (`IPoseEstimator`, `IVideoSource`)
-- [ ] **🛑 [Review] ドメイン設計の承認**
+- [x] Value Objects 設計 (`Keypoint`, `VideoMeta`)
+- [x] Entity/Aggregate 設計 (`Pose`, `AnalyzedVideo`)
+- [x] Domain Interfaces 設計 (`IPoseEstimator`, `IVideoSource`)
+- [x] **🛑 [Review] ドメイン設計の承認**
 
 ### ⬜ タスク 2-2: ドメイン層の実装 (TDD)
 
