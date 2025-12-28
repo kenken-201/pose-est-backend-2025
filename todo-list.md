@@ -29,8 +29,9 @@
 ### ⬜ タスク 2-1: ドメインモデルとインターフェースの設計
 
 - **Goal**: ビジネスロジックの核となる型と契約の定義
-- [ ] エンティティ定義案 (`Video`, `PoseKeypoints`)
-- [ ] インターフェース定義案 (`IVideoProcessor`, `IPoseEstimator`, `IStorageService`)
+- [ ] Value Objects 設計 (`Keypoint`, `VideoMeta`)
+- [ ] Entity/Aggregate 設計 (`Pose`, `AnalyzedVideo`)
+- [ ] Domain Interfaces 設計 (`IPoseEstimator`, `IVideoSource`)
 - [ ] **🛑 [Review] ドメイン設計の承認**
 
 ### ⬜ タスク 2-2: ドメイン層の実装 (TDD)
