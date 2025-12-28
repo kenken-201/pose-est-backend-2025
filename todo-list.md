@@ -10,9 +10,9 @@
 ### ⬜ タスク 1-1: 開発環境と品質ツールの設計
 
 - **Goal**: 堅牢な Python 開発環境の定義
-- [ ] `pyproject.toml` の依存関係定義（FastAPI, TensorFlow, Dev Tools）提案
-- [ ] 静的解析ツール（Ruff, Mypy）とテストツール（Pytest）の設定方針策定
-- [ ] **🛑 [Review] 設定ファイルのドラフト承認**
+- [x] `pyproject.toml` の依存関係定義（FastAPI, TensorFlow, Dev Tools）提案
+- [x] 静的解析ツール（Ruff, Mypy）とテストツール（Pytest）の設定方針策定
+- [x] **🛑 [Review] 設定ファイルのドラフト承認**
 
 ### ⬜ タスク 1-2: 基盤実装
 
