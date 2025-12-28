@@ -42,12 +42,12 @@
 - `ruff check .` (Lint: エラー・警告ゼロ)
 - `mypy --strict .` (Type Check: 型エラーゼロ)
 - `pytest` (Test: 全テスト通過)
-- `pytest --cov` (Coverage: 対象モジュールのカバレッジ 100%を目指す)
+- `pytest --cov` (Coverage: 対象モジュールのカバレッジ 90%以上をキープする)
 
 **コードスタイル要件:**
 
 - **自己文書化**: コード自体が意図を語るように命名する。
-- **Docstring**: 全ての公開モジュール、クラス、関数に Google スタイルの Docstring (日本語) を記述する。
+- **Docstring**: 全ての公開モジュール、クラス、関数に Google スタイルの Docstring (**日本語**) を記述する。
 - **コメント**: "Why"（なぜそうしたか）を記述し、"What"（何をしているか）はコードで表現する。
 
 ---
