@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# 実行権限を最小限に制限（セキュリティのベストプラクティス）
+permissions:
+  contents: read
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    # Python 3.11.14.2 の安定した動作を保証
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Python 3.11.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.14"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.2.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      # 依存関係のキャッシュ（TensorFlow等の重いバイナリの再配布を回避）
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      # 1. Lint & Format Check (Ruff)
+      # 最も高速なチェックを最初に実行し、失敗時は即座に終了（Fail-Fast）
+      - name: Lint and Format with Ruff
+        run: |
+          poetry run ruff check .
+          poetry run ruff format --check .
+
+      # 2. Static Type Check (Mypy)
+      - name: Type check with Mypy
+        run: poetry run mypy app
+
+      # 3. Unit Tests (Pytest)
+      # 3.11.14の並列性能を活かし、カバレッジも測定
+      - name: Run tests with Pytest
+        run: |
+          poetry run pytest --cov=app --cov-report=xml
+
+      # カバレッジレポートのアップロード（任意）
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
