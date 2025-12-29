@@ -24,6 +24,19 @@ class IPoseEstimator(Protocol):
         ...
 
 
+class IPoseVisualizer(Protocol):
+    """姿勢描画サービスのインターフェース。"""
+
+    def draw(self, image: NDArray[np.uint8], poses: list[Pose]) -> None:
+        """画像に姿勢情報を描画します (In-place)。
+
+        Args:
+            image: 対象画像
+            poses: 描画する姿勢リスト
+        """
+        ...
+
+
 class IVideoSource(Protocol):
     """動画入力ソースのインターフェース。"""
 
@@ -140,20 +153,6 @@ class ITempManager(Protocol):
 
         Returns:
             成功時は True
-        """
-        ...
-
-
-class IAudioMerger(Protocol):
-    """音声結合サービスのインターフェース。"""
-
-    def merge_audio(self, video_no_audio: str, original_video: str, output: str) -> None:
-        """動画に音声を結合します。
-
-        Args:
-            video_no_audio: 映像のみの動画パス
-            original_video: 音声ソースの動画パス
-            output: 出力パス
         """
         ...
 

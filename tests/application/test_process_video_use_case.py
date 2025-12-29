@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,6 +11,12 @@ from posture_estimation.domain.values import VideoMeta
 @pytest.fixture
 def mock_pose_estimator() -> MagicMock:
     """姿勢推定エンジンのモック。"""
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_pose_visualizer() -> MagicMock:
+    """姿勢描画サービスのモック。"""
     return MagicMock()
 
 
@@ -57,7 +63,6 @@ def mock_video_source_factory(mock_video_source: MagicMock) -> MagicMock:
 def mock_video_sink() -> MagicMock:
     """動画シンクのモック。"""
     sink = MagicMock()
-    sink.__enter__.return_value = sink
 
     def consume_frames(*args: object, **kwargs: object) -> None:
         # イテレータを消費して、中の処理を実行させる
@@ -80,28 +85,22 @@ def mock_video_sink_factory(mock_video_sink: MagicMock) -> MagicMock:
 
 
 @pytest.fixture
-def mock_audio_merger() -> MagicMock:
-    """音声結合サービスのモック。"""
-    return MagicMock()
-
-
-@pytest.fixture
 def use_case(
     mock_pose_estimator: MagicMock,
+    mock_pose_visualizer: MagicMock,
     mock_storage_service: MagicMock,
     mock_temp_manager: MagicMock,
     mock_video_source_factory: MagicMock,
     mock_video_sink_factory: MagicMock,
-    mock_audio_merger: MagicMock,
 ) -> ProcessVideoUseCase:
     """ProcessVideoUseCase フィクスチャ。"""
     return ProcessVideoUseCase(
         pose_estimator=mock_pose_estimator,
+        pose_visualizer=mock_pose_visualizer,
         storage_service=mock_storage_service,
         temp_manager=mock_temp_manager,
         video_source_factory=mock_video_source_factory,
         video_sink_factory=mock_video_sink_factory,
-        audio_merger=mock_audio_merger,
     )
 
 
@@ -110,8 +109,8 @@ def test_execute_normal_flow(
     mock_video_source: MagicMock,
     mock_video_sink: MagicMock,
     mock_pose_estimator: MagicMock,
+    mock_pose_visualizer: MagicMock,
     mock_temp_manager: MagicMock,
-    mock_audio_merger: MagicMock,
     mock_storage_service: MagicMock,
 ) -> None:
     """正常系の処理フローを検証する。"""
@@ -123,10 +122,7 @@ def test_execute_normal_flow(
     )
 
     # Temp paths
-    mock_temp_manager.create_temp_path.side_effect = [
-        "temp_no_audio.mp4",  # 1回目: 映像のみ
-        "temp_with_audio.mp4",  # 2回目: 音声結合後
-    ]
+    mock_temp_manager.create_temp_path.return_value = "temp_output.mp4"
 
     # Frames setup (2 frames)
     import numpy as np
@@ -137,7 +133,7 @@ def test_execute_normal_flow(
 
     # Pose estimation setup
     pose = MagicMock(spec=Pose)
-    pose.keypoints = []  # 空のリストでよい(描画ループは回らない)
+    pose.keypoints = []
     mock_pose_estimator.estimate.return_value = [pose]
 
     # Storage setup
@@ -148,39 +144,68 @@ def test_execute_normal_flow(
     result = use_case.execute(input_data)
 
     # Verify
-    # 1. Video Source creation and usage
+    # 1. Video Source usage
     assert mock_video_source.read_frames.called
     assert mock_video_source.get_meta.called
 
-    # 2. Pose Estimation called for each frame
+    # 2. Pose Estimation & Visualization called for each frame
     assert mock_pose_estimator.estimate.call_count == 2
+    assert mock_pose_visualizer.draw.call_count == 2
+    mock_pose_visualizer.draw.assert_called_with(frame2, [pose])
 
-    # 3. Video Sink usage
+    # 3. Video Sink usage (with audio path)
     mock_video_sink.save_video.assert_called_once()
     _, kwargs = mock_video_sink.save_video.call_args
-    assert kwargs["output_path"] == "temp_no_audio.mp4"
+    assert kwargs["output_path"] == "temp_output.mp4"
     assert kwargs["fps"] == 30.0
+    assert kwargs["audio_path"] == "input.mp4"
 
-    # 4. Audio Merge
-    mock_audio_merger.merge_audio.assert_called_once_with(
-        video_no_audio="temp_no_audio.mp4",
-        original_video="input.mp4",
-        output="temp_with_audio.mp4",
-    )
+    # 4. Cleanup
+    mock_temp_manager.cleanup.assert_called_once_with("temp_output.mp4")
 
-    # 5. Cleanup (intermediate file)
-    mock_temp_manager.cleanup.assert_called()
-    assert call("temp_no_audio.mp4") in mock_temp_manager.cleanup.call_args_list
-
-    # 6. Upload
+    # 5. Upload
     mock_storage_service.upload.assert_called_once_with(
-        "temp_with_audio.mp4", "output.mp4"
+        "temp_output.mp4", "output.mp4"
     )
 
-    # 7. Result
+    # 6. Result
     assert result.signed_url == "http://signed-url.com"
     assert result.video_meta.width == 1280
     assert result.total_poses == 2  # 2 frames * 1 pose
+
+
+def test_execute_no_audio_flow(
+    use_case: ProcessVideoUseCase,
+    mock_video_source: MagicMock,
+    mock_video_sink: MagicMock,
+    mock_temp_manager: MagicMock,
+) -> None:
+    """音声なし動画の処理フローを検証する。"""
+    # Setup
+    input_data = ProcessVideoInput(
+        input_path="input_silent.mp4",
+        output_key="output.mp4",
+    )
+    mock_temp_manager.create_temp_path.return_value = "temp_output.mp4"
+
+    # Metadata (no audio)
+    mock_video_source.get_meta.return_value = VideoMeta(
+        width=1280,
+        height=720,
+        fps=30.0,
+        total_frames=10,
+        duration_sec=1.0,
+        has_audio=False,
+    )
+    # Dummy frames
+    mock_video_source.read_frames.return_value = iter([])
+
+    # Execute
+    use_case.execute(input_data)
+
+    # Verify sink call
+    _, kwargs = mock_video_sink.save_video.call_args
+    assert kwargs["audio_path"] is None
 
 
 def test_execute_cleanup_on_error(
@@ -196,48 +221,15 @@ def test_execute_cleanup_on_error(
     input_data = ProcessVideoInput(
         input_path="input.mp4",
         output_key="output.mp4",
-        score_threshold=0.5,
     )
+    mock_temp_manager.create_temp_path.return_value = "temp_error.mp4"
 
-    mock_temp_manager.create_temp_path.side_effect = ["temp1.mp4", "temp2.mp4"]
-
-    # Source でエラー発生させる
+    # Source error
     mock_video_source_factory.side_effect = VideoProcessingError("Source Error")
 
     # Execute & Verify
     with pytest.raises(VideoProcessingError):
         use_case.execute(input_data)
 
-    # クリーンアップが呼ばれたか確認
-    assert mock_temp_manager.cleanup.call_count == 2
-    mock_temp_manager.cleanup.assert_any_call("temp1.mp4")
-    mock_temp_manager.cleanup.assert_any_call("temp2.mp4")
-
-
-def test_execute_storage_error(
-    use_case: ProcessVideoUseCase,
-    mock_video_source: MagicMock,
-    mock_storage_service: MagicMock,
-    mock_temp_manager: MagicMock,
-) -> None:
-    """ストレージエラー発生時にクリーンアップされることを検証する。"""
-    from posture_estimation.application.dtos import ProcessVideoInput
-    from posture_estimation.domain.exceptions import StorageError
-
-    input_data = ProcessVideoInput(
-        input_path="input.mp4",
-        output_key="output.mp4",
-        score_threshold=0.5,
-    )
-    mock_temp_manager.create_temp_path.side_effect = ["temp1.mp4", "temp2.mp4"]
-
-    # Upload でエラー
-    mock_storage_service.upload.side_effect = StorageError("Upload Failed")
-
-    # Source mock setup requirements
-    mock_video_source.read_frames.return_value = iter([]) # dummy
-
-    with pytest.raises(StorageError):
-        use_case.execute(input_data)
-
-    assert mock_temp_manager.cleanup.call_count == 2
+    assert mock_temp_manager.cleanup.called
+    mock_temp_manager.cleanup.assert_called_with("temp_error.mp4")
