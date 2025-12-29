@@ -58,14 +58,22 @@
 | :--------------- | :------------------------------------- | :---------------------------------------- |
 | **Language**     | **Python 3.11.14**                     | 型ヒント機能をフル活用                    |
 | **Framework**    | **FastAPI 0.127.1**                    | 高速、型安全、モダンな Web フレームワーク |
-| **ML Core**      | **TensorFlow 2.18.1 / TensorFlow Hub** | Google MoveNet モデルの実行               |
+| **ML Core**      | **TensorFlow 2.18.1 / TensorFlow Hub** | Google MoveNet (Multi-person 対応)        |
 | **Image Proc**   | **OpenCV 4.12.0**                      | 動画フレームの切り出しと描画              |
+| **Audio/Video**  | **FFmpeg (via ffmpeg-python)**         | 音声保持と動画結合 (OpenCV の代替/補完)   |
+| **Storage**      | **Boto3 (AWS SDK)**                    | Cloudflare R2 (S3 互換) へのアクセス      |
 | **Architecture** | **Clean Architecture**                 | 依存性の方向を内側に保つ                  |
 | **Testing**      | **pytest 9.0.2, pytest-asyncio 1.3.0** | 非同期対応テストフレームワーク            |
 | **Linter**       | **Ruff 0.14.10**                       | 高速かつ厳格なリンター                    |
 | **Type Check**   | **Mypy 1.19.0 (Strict)**               | 堅牢な静的型付け検査                      |
 
 ---
+
+## 4. 追加要件 (Phase 2 Updated)
+
+- **複数人推定**: 動画内の複数人に対して姿勢推定を行う（遠方の人物は妥協可）。
+- **音声保持**: 加工後の動画にも元の音声を保持する（FFmpeg 等の活用）。
+- **ストレージ連携**: 処理済み動画は Cloudflare R2 に保存し、署名付き URL を発行する。
 
 ## 4. アーキテクチャ設計指針
 
