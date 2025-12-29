@@ -1,11 +1,22 @@
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from posture_estimation.api.exceptions import register_exception_handlers
+from posture_estimation.api.middleware import RequestLoggingMiddleware
 from posture_estimation.api.router import router as api_router
+
+
+def _get_cors_origins() -> list[str]:
+    """CORS 許可オリジンを取得します。"""
+    origins_str = os.getenv("CORS_ORIGINS", "*")
+    if origins_str == "*":
+        return ["*"]
+    return [origin.strip() for origin in origins_str.split(",")]
 
 
 @asynccontextmanager
@@ -27,6 +38,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS ミドルウェア
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_get_cors_origins(),
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+# ログミドルウェア
+app.add_middleware(RequestLoggingMiddleware)
+
 # ルーター登録
 app.include_router(api_router)
 
@@ -38,4 +61,3 @@ register_exception_handlers(app)
 def read_root() -> RedirectResponse:
     """ルートパスへのアクセスを API ドキュメントへリダイレクトします。"""
     return RedirectResponse(url="/docs")
-
