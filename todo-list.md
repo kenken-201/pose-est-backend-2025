@@ -98,14 +98,14 @@
 ### ⬜ タスク 4-1: ユースケース設計
 
 - **Goal**: アプリケーションの振る舞い（処理フロー）の定義
-- [ ] `ProcessVideoUseCase` のフロー設計
-  - [ ] 入出力 DTO 定義 (`ProcessVideoInput`, `ProcessVideoResult`)
-  - [ ] シーケンス図作成
-- [ ] エラーハンドリング戦略定義
-  - [ ] クリーンアップ保証 (try-finally)
-  - [ ] フレームスキップロジック
-- [ ] DI（依存性注入）コンテナの構成設計
-- [ ] **🛑 [Review] ユースケース設計の承認**
+- [x] `ProcessVideoUseCase` のフロー設計
+  - [x] 入出力 DTO 定義 (`ProcessVideoInput`, `ProcessVideoResult`)
+  - [x] シーケンス図作成
+- [x] エラーハンドリング戦略定義
+  - [x] クリーンアップ保証 (try-finally)
+  - [x] フレームスキップロジック
+- [x] DI（依存性注入）コンテナの構成設計
+- [x] **🛑 [Review] ユースケース設計の承認**
 
 ### ⬜ タスク 4-2: アプリケーションサービス実装 (TDD)
 
