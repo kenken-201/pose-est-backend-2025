@@ -57,22 +57,39 @@
 
 ## 🧠 フェーズ 3: コア機能・インフラ実装 (Infrastructure Layer)
 
-### ⬜ タスク 3-1: インフラストラクチャ設計
+### ✅ タスク 3-1: インフラストラクチャ設計
 
 - **Goal**: 外部システム（ML モデル, OpenCV, Storage）との連携設計
-- [ ] MoveNet モデルのラッパー設計（Multi-person 対応戦略）
-- [ ] 動画処理パイプライン設計（OpenCV + FFmpeg での音声結合）
-- [ ] R2 リポジトリ設計（Boto3 使用, 署名 URL 生成）
-- [ ] ローカルストレージ管理の設計（一時ファイル用）
-- [ ] **🛑 [Review] インフラ設計の承認**
+- [x] MoveNet 推定エンジン設計
+  - [x] `MoveNetPoseEstimator` クラス設計 (Singleton, Multi-person)
+  - [x] スコア閾値フィルタリング戦略
+- [x] 動画処理パイプライン設計
+  - [x] `OpenCVVideoSource` 設計 (読み込み + メタデータ)
+  - [x] `OpenCVVideoSink` 設計 (フレーム書き出し)
+  - [x] `FFmpegAudioMerger` 設計 (音声結合)
+- [x] ストレージサービス設計
+  - [x] `R2StorageService` 設計 (Boto3/S3 互換)
+  - [x] `TempFileManager` 設計 (一時ファイル管理)
+- [x] **🛑 [Review] インフラ設計の承認**
 
-### ⬜ タスク 3-2: ML エンジンと動画処理の実装 (TDD)
+### ✅ タスク 3-2: ML エンジンと動画処理の実装 (TDD)
 
 - **Goal**: MoveNet と OpenCV/FFmpeg の統合
-- [ ] `MoveNetPoseEstimator` の実装（複数人対応）とテスト
-- [ ] `VideoProcessor` 実装（音声保持・結合ロジック）
-- [ ] `R2StorageService` 実装（アップロード・URL 発行）
-- [ ] **🛑 [Review] 姿勢推定精度と音声保持・R2 保存の確認**
+- [x] `MoveNetPoseEstimator` の実装（複数人対応）とテスト
+  - [x] @tf.function によるグラフモード最適化
+  - [x] Letterboxing による入力リサイズ（アスペクト比維持）
+  - [x] Warm-up による初回推論遅延解消
+  - [x] 座標逆変換による元画像座標系への復元
+- [x] `VideoProcessor` 実装（音声保持・結合ロジック）
+  - [x] Source/Sink 実装 (OpenCV)
+  - [x] Audio Merger 実装 (FFmpeg)
+  - [x] Context Manager 対応 (`with` 構文)
+- [x] `R2StorageService` 実装（アップロード・URL 発行）
+  - [x] Adaptive リトライ設定
+- [x] `TempFileManager` 実装
+  - [x] ロギング追加
+  - [x] Context Manager 対応
+- [x] **🛑 [Review] 姿勢推定精度と音声保持・R2 保存の確認**
 
 ---
 
