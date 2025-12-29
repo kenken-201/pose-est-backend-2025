@@ -1,6 +1,9 @@
 """API ルーター定義。"""
 
 import logging
+import shutil
+import uuid
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
@@ -8,12 +11,9 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile
 from posture_estimation.api.dependencies import (
     ProcessVideoUseCaseDep,
     TempManagerDep,
-    create_video_source,
     get_max_upload_size_bytes,
 )
 from posture_estimation.api.exceptions import (
-    MAX_VIDEO_DURATION_SEC,
-    MIN_VIDEO_DURATION_SEC,
     FileTooLargeError,
     InvalidVideoFormatError,
     ModelInferenceError,
@@ -28,9 +28,13 @@ from posture_estimation.api.schemas import (
     VideoMetaResponse,
 )
 from posture_estimation.application.dtos import ProcessVideoInput
+from posture_estimation.application.use_cases import (
+    MIN_VIDEO_DURATION_SEC,
+)
 from posture_estimation.domain.exceptions import (
     PoseEstimationError,
     StorageError,
+    VideoDurationError,
     VideoProcessingError,
 )
 
@@ -45,7 +49,7 @@ router = APIRouter(prefix="/api/v1", tags=["video"])
     summary="ヘルスチェック",
     description="API の稼働状態を確認します。",
 )
-async def health_check() -> HealthResponse:
+def health_check() -> HealthResponse:
     """ヘルスチェックエンドポイント。"""
     return HealthResponse(status="healthy", version="1.0.0")
 
@@ -63,7 +67,7 @@ async def health_check() -> HealthResponse:
     summary="動画処理",
     description="動画をアップロードし、姿勢推定結果を含む動画を生成します。",
 )
-async def process_video(
+def process_video(
     file: Annotated[UploadFile, File(description="処理対象の動画ファイル")],
     use_case: ProcessVideoUseCaseDep,
     temp_manager: TempManagerDep,
@@ -79,6 +83,10 @@ async def process_video(
 ) -> ProcessVideoResponse:
     """動画処理エンドポイント。
 
+    Note:
+        FastAPI (Starlette) の仕様により、CPU バウンドな処理や同期 I/O を含むため
+        `async def` ではなく `def` で定義し、スレッドプールで実行させています。
+
     Args:
         file: アップロードされた動画ファイル
         use_case: 動画処理ユースケース
@@ -93,27 +101,26 @@ async def process_video(
 
     try:
         # 1. ファイルサイズチェック
+        # UploadFile.size は SpooledTemporaryFile の実装依存で正確でない場合があるが、
+        # Content-Length ヘッダー等から取れる場合もある。
+        # ここでは簡易チェックとする。厳密にはストリーム読み込み時にカウントすべき。
         if file.size and file.size > max_size:
             size_mb = file.size / (1024 * 1024)
             max_mb = max_size / (1024 * 1024)
             raise FileTooLargeError(size_mb, max_mb)
 
-        # 2. 一時ファイルに保存
-        suffix = _get_file_extension(file.filename or "video.mp4")
+        # 2. 一時ファイルに保存 (ストリーム処理)
+        filename = file.filename or "video.mp4"
+        suffix = Path(filename).suffix or ".mp4"
         input_temp_path = temp_manager.create_temp_path(suffix=suffix)
 
-        # ファイル内容を読み取り
-        content = await file.read()
-        from pathlib import Path
-        Path(input_temp_path).write_bytes(content)
+        with Path(input_temp_path).open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
         logger.info("Saved uploaded file to %s", input_temp_path)
 
-        # 3. 動画バリデーション
-        _validate_video(input_temp_path)
-
-        # 4. ユースケース実行
-        output_key = _generate_output_key(file.filename or "video.mp4")
+        # 3. ユースケース実行 (バリデーション含む)
+        output_key = _generate_output_key(filename)
         input_dto = ProcessVideoInput(
             input_path=input_temp_path,
             output_key=output_key,
@@ -122,7 +129,7 @@ async def process_video(
 
         result = use_case.execute(input_dto)
 
-        # 5. レスポンス変換
+        # 4. レスポンス変換
         return ProcessVideoResponse(
             signed_url=result.signed_url,
             video_meta=VideoMetaResponse(
@@ -147,67 +154,48 @@ async def process_video(
         # API 例外はそのまま再送出
         raise
 
-    except VideoProcessingError as e:
-        logger.exception("Video processing error")
-        raise InvalidVideoFormatError(str(e)) from e
-
-    except PoseEstimationError as e:
-        logger.exception("Pose estimation error")
-        raise ModelInferenceError(str(e)) from e
-
-    except StorageError as e:
-        logger.exception("Storage error")
-        raise StorageServiceUnavailableError(str(e)) from e
-
     except Exception as e:
-        logger.exception("Unexpected error during video processing")
-        raise ModelInferenceError(f"Unexpected error: {e}") from e
+        # ドメイン例外を API 例外に変換
+        raise _convert_to_api_error(e) from e
 
     finally:
         # 入力一時ファイルのクリーンアップ
         if input_temp_path:
             temp_manager.cleanup(input_temp_path)
-
-
-def _get_file_extension(filename: str) -> str:
-    """ファイル名から拡張子を取得します。"""
-    if "." in filename:
-        return "." + filename.rsplit(".", 1)[-1]
-    return ".mp4"
+        # UploadFile のクローズ
+        try:
+            file.file.close()
+        except Exception:
+            logger.warning("Failed to close upload file", exc_info=True)
 
 
 def _generate_output_key(original_filename: str) -> str:
     """出力ファイルのキーを生成します。"""
-    import uuid
-
-    base_name = original_filename.rsplit(".", 1)[0] if "." in original_filename else original_filename
+    path = Path(original_filename)
+    base_name = path.stem
     unique_id = uuid.uuid4().hex[:8]
     return f"processed/{base_name}_{unique_id}.mp4"
 
 
-def _validate_video(video_path: str) -> None:
-    """動画ファイルをバリデーションします。
+def _convert_to_api_error(e: Exception) -> Exception:
+    """ドメイン例外を API 例外に変換します。"""
+    if isinstance(e, VideoDurationError):
+        logger.warning("Video duration error: %s", e)
+        if e.duration_sec < MIN_VIDEO_DURATION_SEC:
+            return VideoTooShortError(e.duration_sec)
+        return VideoTooLongError(e.duration_sec)
 
-    Args:
-        video_path: 動画ファイルパス
+    if isinstance(e, VideoProcessingError):
+        logger.warning("Video processing error: %s", e)
+        return InvalidVideoFormatError(str(e))
 
-    Raises:
-        InvalidVideoFormatError: 読み込めない場合
-        VideoTooShortError: 動画が短すぎる場合
-        VideoTooLongError: 動画が長すぎる場合
-    """
-    try:
-        with create_video_source(video_path) as source:
-            meta = source.get_meta()
+    if isinstance(e, PoseEstimationError):
+        logger.exception("Pose estimation error")
+        return ModelInferenceError(str(e))
 
-            if meta.duration_sec < MIN_VIDEO_DURATION_SEC:
-                raise VideoTooShortError(meta.duration_sec)
+    if isinstance(e, StorageError):
+        logger.exception("Storage error")
+        return StorageServiceUnavailableError(str(e))
 
-            if meta.duration_sec > MAX_VIDEO_DURATION_SEC:
-                raise VideoTooLongError(meta.duration_sec)
-
-    except (VideoTooShortError, VideoTooLongError):
-        raise
-    except Exception as e:
-        raise InvalidVideoFormatError(f"Cannot read video: {e}") from e
-
+    logger.exception("Unexpected error during video processing")
+    return ModelInferenceError(f"Unexpected error: {e}")

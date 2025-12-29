@@ -23,6 +23,15 @@ class VideoProcessingError(DomainError):
         super().__init__(message)
 
 
+class VideoDurationError(DomainError):
+    """動画の長さが制限外の場合の例外。"""
+
+    def __init__(self, message: str, duration_sec: float) -> None:
+        """初期化メソッド。"""
+        self.duration_sec = duration_sec
+        super().__init__(message)
+
+
 class PoseEstimationError(DomainError):
     """姿勢推定処理に失敗した場合の例外。"""
 

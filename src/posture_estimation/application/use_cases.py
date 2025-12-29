@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from typing import Final
 
 import numpy as np
 from numpy.typing import NDArray
@@ -7,6 +8,7 @@ from posture_estimation.application.dtos import (
     ProcessVideoInput,
     ProcessVideoResult,
 )
+from posture_estimation.domain.exceptions import VideoDurationError
 from posture_estimation.domain.interfaces import (
     IPoseEstimator,
     IPoseVisualizer,
@@ -15,6 +17,10 @@ from posture_estimation.domain.interfaces import (
     IVideoSinkFactory,
     IVideoSourceFactory,
 )
+
+# 動画の長さ制限 (秒)
+MIN_VIDEO_DURATION_SEC: Final[float] = 3.0
+MAX_VIDEO_DURATION_SEC: Final[float] = 420.0  # 7分
 
 
 class ProcessVideoUseCase:
@@ -57,6 +63,7 @@ class ProcessVideoUseCase:
 
         Raises:
             VideoProcessingError: 動画処理に失敗した場合
+            VideoDurationError: 動画の長さが制限外の場合
             PoseEstimationError: 姿勢推定に失敗した場合
             StorageError: 保存に失敗した場合
         """
@@ -74,6 +81,15 @@ class ProcessVideoUseCase:
             # 動画ソースを開く
             with self._video_source_factory(input_data.input_path) as source:
                 video_meta = source.get_meta()
+
+                # バリデーション: 動画の長さチェック
+                if video_meta.duration_sec < MIN_VIDEO_DURATION_SEC:
+                    msg = f"Video is too short (min {MIN_VIDEO_DURATION_SEC}s)"
+                    raise VideoDurationError(msg, video_meta.duration_sec)
+
+                if video_meta.duration_sec > MAX_VIDEO_DURATION_SEC:
+                    msg = f"Video is too long (max {MAX_VIDEO_DURATION_SEC}s)"
+                    raise VideoDurationError(msg, video_meta.duration_sec)
 
                 # フレーム処理ジェネレータ
                 def frame_processor() -> Iterator[NDArray[np.uint8]]:
@@ -116,4 +132,3 @@ class ProcessVideoUseCase:
 
         finally:
             self._temp_manager.cleanup(temp_output)
-

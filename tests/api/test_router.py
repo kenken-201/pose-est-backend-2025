@@ -2,7 +2,7 @@
 
 import io
 from collections.abc import Generator
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,6 +12,7 @@ from posture_estimation.api.dependencies import (
     get_temp_manager,
 )
 from posture_estimation.application.dtos import ProcessVideoResult
+from posture_estimation.domain.exceptions import VideoDurationError
 from posture_estimation.domain.values import VideoMeta
 from posture_estimation.main import app
 
@@ -46,37 +47,15 @@ def mock_temp_manager() -> MagicMock:
 
 
 @pytest.fixture
-def mock_video_source() -> MagicMock:
-    """OpenCVVideoSource のモック。"""
-    mock = MagicMock()
-    mock.get_meta.return_value = VideoMeta(
-        width=1920,
-        height=1080,
-        fps=30.0,
-        total_frames=150,
-        duration_sec=5.0,
-        has_audio=True,
-    )
-    mock.__enter__.return_value = mock
-    mock.__exit__.return_value = None
-    return mock
-
-
-@pytest.fixture
 def test_client(
     mock_use_case: MagicMock,
     mock_temp_manager: MagicMock,
-    mock_video_source: MagicMock,
 ) -> Generator[TestClient, None, None]:
     """テストクライアント (依存関係をオーバーライド)。"""
     app.dependency_overrides[get_process_video_use_case] = lambda: mock_use_case
     app.dependency_overrides[get_temp_manager] = lambda: mock_temp_manager
 
-    with patch(
-        "posture_estimation.api.router.create_video_source",
-        return_value=mock_video_source,
-    ):
-        yield TestClient(app)
+    yield TestClient(app)
 
     app.dependency_overrides.clear()
 
@@ -130,57 +109,36 @@ def test_process_video_invalid_threshold(test_client: TestClient) -> None:
 
 def test_process_video_too_short(
     test_client: TestClient,
-    mock_video_source: MagicMock,
+    mock_use_case: MagicMock,
 ) -> None:
-    """異常系: 動画が短すぎる場合にエラーを返すことを確認する。"""
-    # 動画時間を短く設定
-    mock_video_source.get_meta.return_value = VideoMeta(
-        width=1920,
-        height=1080,
-        fps=30.0,
-        total_frames=30,
-        duration_sec=1.0,  # 3秒未満
-        has_audio=False,
-    )
+    """異常系: 動画が短すぎる場合 (VideoDurationError) にエラーを返すことを確認する。"""
+    # UseCase が VideoDurationError を投げるように設定
+    mock_use_case.execute.side_effect = VideoDurationError("Video too short", 0.5)
 
     video_content = b"dummy video content"
     files = {"file": ("test.mp4", io.BytesIO(video_content), "video/mp4")}
 
-    with patch(
-        "posture_estimation.api.router.create_video_source",
-        return_value=mock_video_source,
-    ):
-        response = test_client.post("/api/v1/process", files=files)
+    response = test_client.post("/api/v1/process", files=files)
 
+    # 400 Bad Request に変換されているはず
     assert response.status_code == 400
     error = response.json()["error"]
-    assert error["code"] == "VIDEO_TOO_SHORT"
+    assert "Video too short" in error["message"]
 
 
 def test_process_video_too_long(
     test_client: TestClient,
-    mock_video_source: MagicMock,
+    mock_use_case: MagicMock,
 ) -> None:
-    """異常系: 動画が長すぎる場合にエラーを返すことを確認する。"""
-    # 動画時間を長く設定
-    mock_video_source.get_meta.return_value = VideoMeta(
-        width=1920,
-        height=1080,
-        fps=30.0,
-        total_frames=30000,
-        duration_sec=500.0,  # 7分超過
-        has_audio=False,
-    )
+    """異常系: 動画が長すぎる場合 (VideoDurationError) にエラーを返すことを確認する。"""
+    # UseCase が VideoDurationError を投げるように設定
+    mock_use_case.execute.side_effect = VideoDurationError("Video too long", 1000.0)
 
     video_content = b"dummy video content"
     files = {"file": ("test.mp4", io.BytesIO(video_content), "video/mp4")}
 
-    with patch(
-        "posture_estimation.api.router.create_video_source",
-        return_value=mock_video_source,
-    ):
-        response = test_client.post("/api/v1/process", files=files)
+    response = test_client.post("/api/v1/process", files=files)
 
     assert response.status_code == 400
     error = response.json()["error"]
-    assert error["code"] == "VIDEO_TOO_LONG"
+    assert "Video too long" in error["message"]

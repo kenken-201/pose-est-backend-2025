@@ -1,6 +1,7 @@
 """FastAPI 依存関係 (Depends)。"""
 
 import os
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
@@ -20,6 +21,7 @@ DEFAULT_MAX_UPLOAD_SIZE_MB = 100
 _container: AppContainer | None = None
 
 
+@lru_cache
 def get_settings() -> dict[str, dict[str, str | float | int]]:
     """環境変数から設定を読み込みます。"""
     return {

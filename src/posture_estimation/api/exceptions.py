@@ -6,6 +6,11 @@ from typing import Any
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from posture_estimation.application.use_cases import (
+    MAX_VIDEO_DURATION_SEC,
+    MIN_VIDEO_DURATION_SEC,
+)
+
 
 class AppErrorCode(str, Enum):
     """アプリケーションエラーコード。"""
@@ -26,11 +31,6 @@ class AppErrorCode(str, Enum):
 
     # 503 Service Unavailable
     STORAGE_SERVICE_UNAVAILABLE = "STORAGE_SERVICE_UNAVAILABLE"
-
-
-# 動画時間制限 (秒)
-MIN_VIDEO_DURATION_SEC = 3.0
-MAX_VIDEO_DURATION_SEC = 420.0  # 7分
 
 
 class APIError(HTTPException):
