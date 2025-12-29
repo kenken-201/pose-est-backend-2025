@@ -1,57 +1,121 @@
+"""一時ファイル管理クラス。
+
+特徴:
+- 自動追跡と一括クリーンアップ
+- 構造化ロギング
+- Context Manager サポート
+"""
+
 import contextlib
+import logging
 import uuid
 from pathlib import Path
+from types import TracebackType
+from typing import Self
+
+logger = logging.getLogger(__name__)
 
 
 class TempFileManager:
-    """一時ファイルを管理するクラス。"""
+    """一時ファイルを管理するクラス。
 
-    # 生成したファイルのパスを保持するリスト
+    Usage:
+    ```python
+    with TempFileManager() as manager:
+        temp_path = manager.create_temp_path(".mp4")
+        # ファイルに書き込み処理
+    # スコープ終了時に自動クリーンアップ
+    ```
+    """
+
     _tracked_files: set[str]
 
     def __init__(self, base_dir: str | None = None) -> None:
         """初期化。
 
         Args:
-            base_dir (str | None): 一時ファイルを保存するディレクトリ。Noneの場合はシステム標準の一時領域を使用。
+            base_dir: 一時ファイル保存ディレクトリ。None の場合はシステム標準。
         """
         if base_dir is None:
             import tempfile
+
             base_dir = str(Path(tempfile.gettempdir()) / "pose-est")
 
         self.base_dir = Path(base_dir)
         self._tracked_files = set()
         self.base_dir.mkdir(parents=True, exist_ok=True)
+        logger.debug("TempFileManager initialized: base_dir=%s", self.base_dir)
+
+    def __enter__(self) -> Self:
+        """Context Manager エントリポイント。"""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Context Manager 終了時に全ファイルをクリーンアップ。"""
+        self.cleanup_all()
 
     def create_temp_path(self, suffix: str = ".mp4") -> str:
         """一時ファイルのパスを生成します。
 
         Args:
-            suffix (str): ファイルの拡張子
+            suffix: ファイルの拡張子 (デフォルト: .mp4)
 
         Returns:
-            str: 生成されたファイルパス
+            生成されたファイルパス
         """
         filename = f"{uuid.uuid4()}{suffix}"
         path = self.base_dir / filename
         str_path = str(path)
         self._tracked_files.add(str_path)
+        logger.debug("Created temp path: %s", str_path)
         return str_path
 
-    def cleanup(self, file_path: str) -> None:
+    def cleanup(self, file_path: str) -> bool:
         """指定されたファイルを削除します。
 
         Args:
-            file_path (str): 削除対象のファイルパス
+            file_path: 削除対象のファイルパス
+
+        Returns:
+            削除成功時は True、ファイルが存在しないまたは失敗時は False
         """
-        with contextlib.suppress(OSError):
-            Path(file_path).unlink()  # 削除失敗時は無視(ログ出力推奨だが今回は省略)
+        path = Path(file_path)
+        deleted = False
+
+        if path.exists():
+            with contextlib.suppress(OSError):
+                path.unlink()
+                deleted = True
+                logger.debug("Deleted temp file: %s", file_path)
+
+        if not deleted and path.exists():
+            logger.warning("Failed to delete temp file: %s", file_path)
 
         if file_path in self._tracked_files:
             self._tracked_files.remove(file_path)
 
-    def cleanup_all(self) -> None:
-        """管理しているすべての一時ファイルを削除します。"""
-        # コピーを作成してループ (削除中にset変更エラーを防ぐ)
+        return deleted
+
+    def cleanup_all(self) -> int:
+        """管理しているすべての一時ファイルを削除します。
+
+        Returns:
+            削除されたファイル数
+        """
+        count = 0
         for path in list(self._tracked_files):
-            self.cleanup(path)
+            if self.cleanup(path):
+                count += 1
+
+        logger.info("Cleaned up %d temp files", count)
+        return count
+
+    @property
+    def tracked_count(self) -> int:
+        """現在追跡中のファイル数。"""
+        return len(self._tracked_files)
