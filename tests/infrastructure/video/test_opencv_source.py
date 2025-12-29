@@ -71,3 +71,15 @@ def test_read_frames(mock_cv2: MagicMock) -> None:
     assert len(frames) == 2
     assert frames[0][0] == 0
     assert frames[1][0] == 1
+
+
+def test_context_manager(mock_cv2: MagicMock) -> None:
+    """Context Manager として使用した際にリソースが解放されるか確認する。"""
+    cap = mock_cv2.return_value
+    cap.isOpened.return_value = True
+
+    with OpenCVVideoSource("test.mp4") as source:
+        assert source.cap == cap
+
+    # __exit__ で release が呼ばれることを確認
+    cap.release.assert_called_once()

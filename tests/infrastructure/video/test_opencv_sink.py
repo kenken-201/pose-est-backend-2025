@@ -35,3 +35,13 @@ def test_save_video(mock_cv2_writer: MagicMock) -> None:
     writer_instance = mock_cv2_writer.return_value
     assert writer_instance.write.call_count == 2
     writer_instance.release.assert_called_once()
+
+
+def test_save_video_empty_frames(mock_cv2_writer: MagicMock) -> None:
+    """空のフレームイテレータでエラーが発生することを確認する。"""
+    from posture_estimation.domain.exceptions import VideoProcessingError
+
+    sink = OpenCVVideoSink()
+
+    with pytest.raises(VideoProcessingError, match="No frames to write"):
+        sink.save_video(iter([]), "output.mp4", fps=30.0)
