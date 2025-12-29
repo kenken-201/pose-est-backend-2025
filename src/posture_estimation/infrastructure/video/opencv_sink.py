@@ -20,7 +20,11 @@ class OpenCVVideoSink(IVideoSink):
     """OpenCV を使用した動画出力。"""
 
     def save_video(
-        self, frames: Iterator[NDArray[np.uint8]], output_path: str, fps: float
+        self,
+        frames: Iterator[NDArray[np.uint8]],
+        output_path: str,
+        fps: float,
+        _audio_path: str | None = None,
     ) -> None:
         """フレーム列を動画ファイルとして保存します。
 
@@ -28,6 +32,7 @@ class OpenCVVideoSink(IVideoSink):
             frames: 画像データのイテレータ (RGB 形式)
             output_path: 出力先ファイルパス
             fps: フレームレート
+            audio_path: 音声ソース (OpenCV 版では現在無視されます)
 
         Raises:
             VideoProcessingError: フレームが空または書き込み失敗時

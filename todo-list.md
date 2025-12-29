@@ -76,10 +76,19 @@
 
 - **Goal**: MoveNet と OpenCV/FFmpeg の統合
 - [x] `MoveNetPoseEstimator` の実装（複数人対応）とテスト
+  - [x] @tf.function によるグラフモード最適化
+  - [x] Letterboxing による入力リサイズ（アスペクト比維持）
+  - [x] Warm-up による初回推論遅延解消
+  - [x] 座標逆変換による元画像座標系への復元
 - [x] `VideoProcessor` 実装（音声保持・結合ロジック）
   - [x] Source/Sink 実装 (OpenCV)
   - [x] Audio Merger 実装 (FFmpeg)
+  - [x] Context Manager 対応 (`with` 構文)
 - [x] `R2StorageService` 実装（アップロード・URL 発行）
+  - [x] Adaptive リトライ設定
+- [x] `TempFileManager` 実装
+  - [x] ロギング追加
+  - [x] Context Manager 対応
 - [x] **🛑 [Review] 姿勢推定精度と音声保持・R2 保存の確認**
 
 ---

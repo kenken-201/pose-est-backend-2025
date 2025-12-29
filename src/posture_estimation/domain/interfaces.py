@@ -87,7 +87,11 @@ class IVideoSink(Protocol):
     """動画出力のインターフェース。"""
 
     def save_video(
-        self, frames: Iterator[NDArray[np.uint8]], output_path: str, fps: float
+        self,
+        frames: Iterator[NDArray[np.uint8]],
+        output_path: str,
+        fps: float,
+        audio_path: str | None = None,
     ) -> None:
         """フレーム列を動画ファイルとして保存します。
 
@@ -95,5 +99,6 @@ class IVideoSink(Protocol):
             frames (Iterator[NDArray[np.uint8]]): 画像データのイテレータ
             output_path (str): 出力先ファイルパス
             fps (float): フレームレート
+            audio_path (str | None): 音声ソースとなる動画/音声ファイルのパス
         """
         ...
