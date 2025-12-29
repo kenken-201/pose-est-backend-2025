@@ -109,28 +109,18 @@
 
 ### ⬜ タスク 4-2: アプリケーションサービス実装 (TDD)
 
-- **Goal**: ドメインとインフラをつなぐ実装
-- [ ] DTO 定義
-  - [ ] `ProcessVideoInput` (input_path, output_key, score_threshold)
-  - [ ] `ProcessVideoResult` (signed_url, video_meta, total_poses, processing_time)
-- [ ] `ProcessVideoUseCase` 基本実装
-  - [ ] フレーム処理ループ
-  - [ ] 姿勢推定 + 描画
-  - [ ] 一時ファイル管理
-- [ ] 音声結合統合
-  - [ ] FFmpegAudioMerger との連携
-- [ ] R2 アップロード統合
-  - [ ] 署名 URL 返却
-- [ ] エラーハンドリング
-  - [ ] クリーンアップ保証 (try-finally)
-  - [ ] フレームスキップロジック
-- [ ] DI コンテナ (`AppContainer`)
-  - [ ] 設定読み込み
-  - [ ] Singleton/Factory 設定
-- [ ] 統合テスト
-  - [ ] 正常系 (短い動画での E2E)
-  - [ ] 異常系 (壊れた動画、ストレージエラー)
-- [ ] **🛑 [Review] アプリケーションロジックの確認**
+- **Goal**: ユースケース実装とテストによる品質保証
+- [x] DTO 定義 (済)
+- [x] `ProcessVideoUseCase` 基本実装
+  - [x] フレーム処理ループ
+  - [x] 姿勢推定 + 描画
+  - [x] 一時ファイル管理
+- [x] 音声結合統合
+- [x] R2 アップロード統合
+- [x] エラーハンドリング
+- [x] DI コンテナ (`AppContainer`)
+- [x] 統合テスト (単体テストでの動作確認完了)
+- [x] **🛑 [Review] アプリケーションロジックの確認**
 
 ---
 

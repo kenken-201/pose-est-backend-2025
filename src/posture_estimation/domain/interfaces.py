@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from types import TracebackType
 from typing import Protocol
 
 import numpy as np
@@ -40,6 +41,19 @@ class IVideoSource(Protocol):
         Returns:
             Iterator[tuple[int, NDArray[np.uint8]]]: フレームインデックスと画像データのタプルを返すイテレータ
         """
+        ...
+
+    def __enter__(self) -> "IVideoSource":
+        """コンテキストマネージャのエントリポイント。"""
+        ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        """コンテキストマネージャの終了処理します。"""
         ...
 
 
@@ -99,7 +113,7 @@ class IVideoSink(Protocol):
             frames (Iterator[NDArray[np.uint8]]): 画像データのイテレータ
             output_path (str): 出力先ファイルパス
             fps (float): フレームレート
-        audio_path (str | None): 音声ソースとなる動画/音声ファイルのパス
+            audio_path (str | None): 音声ソースとなる動画/音声ファイルのパス
         """
         ...
 
