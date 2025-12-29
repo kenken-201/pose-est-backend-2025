@@ -53,3 +53,47 @@ class IRepository(Protocol):
             analysis (AnalyzedVideo): 保存する解析結果
         """
         ...
+
+
+class IStorageService(Protocol):
+    """ストレージサービスのインターフェース。"""
+
+    def upload(self, file_path: str, key: str) -> str:
+        """ファイルをアップロードします。
+
+        Args:
+            file_path (str): アップロード元のローカルファイルパス
+            key (str): 保存先のキー (ファイル名)
+
+        Returns:
+            str: アップロードされたリソースへの識別子 (キーやURLの一部)
+        """
+        ...
+
+    def generate_signed_url(self, key: str, expires_in: int = 3600) -> str:
+        """署名付き URL を生成します。
+
+        Args:
+            key (str): 対象のキー
+            expires_in (int): 有効期限 (秒)
+
+        Returns:
+            str: 生成された署名付き URL
+        """
+        ...
+
+
+class IVideoSink(Protocol):
+    """動画出力のインターフェース。"""
+
+    def save_video(
+        self, frames: Iterator[NDArray[np.uint8]], output_path: str, fps: float
+    ) -> None:
+        """フレーム列を動画ファイルとして保存します。
+
+        Args:
+            frames (Iterator[NDArray[np.uint8]]): 画像データのイテレータ
+            output_path (str): 出力先ファイルパス
+            fps (float): フレームレート
+        """
+        ...

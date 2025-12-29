@@ -62,6 +62,7 @@ class VideoMeta:
         fps (float): フレームレート (frames per second)
         total_frames (int): 総フレーム数
         duration_sec (float): 動画の長さ (秒)
+        has_audio (bool): 音声トラックが含まれているか
     """
 
     width: int
@@ -69,3 +70,4 @@ class VideoMeta:
     fps: float
     total_frames: int
     duration_sec: float
+    has_audio: bool = False

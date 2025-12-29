@@ -10,10 +10,12 @@ class Pose:
     Attributes:
         frame_index (int): フレーム番号 (0始まり)
         keypoints (list[Keypoint]): 検出されたキーポイントのリスト
+        overall_score (float): 姿勢全体の信頼度スコア (0.0-1.0)
     """
 
     frame_index: int
     keypoints: list[Keypoint]
+    overall_score: float = 0.0
 
 
 @dataclass
@@ -37,3 +39,14 @@ class AnalyzedVideo:
             pose (Pose): 追加する姿勢データ
         """
         self.poses.append(pose)
+
+    def get_poses_for_frame(self, frame_index: int) -> list[Pose]:
+        """指定されたフレーム番号の姿勢リストを取得します。
+
+        Args:
+            frame_index (int): フレーム番号
+
+        Returns:
+            list[Pose]: 該当フレームで検出された姿勢のリスト
+        """
+        return [p for p in self.poses if p.frame_index == frame_index]

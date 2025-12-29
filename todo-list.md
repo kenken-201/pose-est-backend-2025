@@ -34,24 +34,24 @@
 - [x] Domain Interfaces 設計 (`IPoseEstimator`, `IVideoSource`)
 - [x] **🛑 [Review] ドメイン設計の承認**
 
-### ⬜ タスク 2-2: ドメイン層の実装 (TDD)
+### ✅ タスク 2-2: ドメイン層の実装 (TDD)
 
 - **Goal**: 純粋な Python コードによるドメインロジック実装
-- [ ] Value Objects 拡張
-  - [ ] `Pose` に全体信頼度スコア (`overall_score`) 追加
-  - [ ] `VideoMeta` に `has_audio` フラグ追加
-- [ ] Entities 拡張
-  - [ ] `AnalyzedVideo` に複数人対応のヘルパーメソッド追加 (例: `get_poses_for_frame`)
-- [ ] Interfaces 拡張
-  - [ ] `IStorageService` 追加 (R2 アップロード, 署名 URL 発行)
-  - [ ] `IVideoSink` 追加 (処理済み動画の書き出し)
-- [ ] Domain Exceptions 定義
-  - [ ] `DomainError` 基底クラス
-  - [ ] `VideoProcessingError`, `StorageError` 等
-- [ ] 単体テスト
-  - [ ] `values.py` のテスト (バリデーション)
-  - [ ] `entities.py` のテスト (ロジック)
-- [ ] **🛑 [Review] ドメイン実装と型安全性の確認**
+- [x] Value Objects 拡張
+  - [x] `Pose` に全体信頼度スコア (`overall_score`) 追加
+  - [x] `VideoMeta` に `has_audio` フラグ追加
+- [x] Entities 拡張
+  - [x] `AnalyzedVideo` に複数人対応のヘルパーメソッド追加 (例: `get_poses_for_frame`)
+- [x] Interfaces 拡張
+  - [x] `IStorageService` 追加 (R2 アップロード, 署名 URL 発行)
+  - [x] `IVideoSink` 追加 (処理済み動画の書き出し)
+- [x] Domain Exceptions 定義
+  - [x] `DomainError` 基底クラス
+  - [x] `VideoProcessingError`, `StorageError` 等
+- [x] 単体テスト
+  - [x] `values.py` のテスト (バリデーション)
+  - [x] `entities.py` のテスト (ロジック)
+- [x] **🛑 [Review] ドメイン実装と型安全性の確認**
 
 ---
 
