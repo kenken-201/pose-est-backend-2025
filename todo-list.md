@@ -126,16 +126,16 @@
 
 ## 🔌 フェーズ 5: API インターフェース実装 (Interface Layer)
 
-### ⬜ タスク 5-1: API コントローラー設計
+### ✅ タスク 5-1: API コントローラー設計
 
 - **Goal**: REST API エンドポイントとスキーマ定義
-- [ ] API パス設計 (`POST /api/v1/process`, `GET /api/v1/health`)
-- [ ] リクエスト設計 (Multipart: file + score_threshold)
-- [ ] レスポンス設計（処理済み動画の R2 署名 URL, HTTP ステータス）
-- [ ] リクエスト/レスポンススキーマ (Pydantic) 設計
-- [ ] エラーレスポンス設計 (6 種類のエラーコード)
-- [ ] **動画時間バリデーション (3 秒〜7 分)**
-- [ ] **🛑 [Review] API 設計 (OpenAPI) の承認**
+- [x] API パス設計 (`POST /api/v1/process`, `GET /api/v1/health`)
+- [x] リクエスト設計 (Multipart: file + score_threshold)
+- [x] レスポンス設計（処理済み動画の R2 署名 URL, HTTP ステータス）
+- [x] リクエスト/レスポンススキーマ (Pydantic) 設計
+- [x] エラーレスポンス設計 (7 種類のエラーコード)
+- [x] **動画時間バリデーション (3 秒〜7 分)** - 定数定義済み
+- [x] **🛑 [Review] API 設計 (OpenAPI) の承認**
 
 ### ⬜ タスク 5-2: Web API 実装 (TDD)
 

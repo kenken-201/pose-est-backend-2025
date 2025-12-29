@@ -4,6 +4,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
+from posture_estimation.api.exceptions import register_exception_handlers
+from posture_estimation.api.router import router as api_router
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
@@ -20,9 +23,15 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(
     title="Pose Estimation Backend",
     description="TensorFlow MoveNet を使用した姿勢推定バックエンド API",
-    version="0.1.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
+
+# ルーター登録
+app.include_router(api_router)
+
+# 例外ハンドラー登録
+register_exception_handlers(app)
 
 
 @app.get("/", include_in_schema=False)
@@ -30,13 +39,3 @@ def read_root() -> RedirectResponse:
     """ルートパスへのアクセスを API ドキュメントへリダイレクトします。"""
     return RedirectResponse(url="/docs")
 
-
-@app.get("/health")
-def health_check() -> dict[str, str]:
-    """サービスの健全性を確認するヘルスチェックエンドポイント。
-
-    Returns:
-        dict[str, str]: サービスのステータス (例: {"status": "ok"})
-
-    """
-    return {"status": "ok"}
