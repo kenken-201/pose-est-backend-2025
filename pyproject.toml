@@ -100,7 +100,7 @@ line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports allowed in __init__.py
-"tests/*" = ["S101"]      # allow assert in tests
+"tests/*" = ["S101", "ARG001"]      # allow assert and unused args (fixtures) in tests
 
 [tool.mypy]
 python_version = "3.11"
