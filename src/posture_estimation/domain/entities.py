@@ -17,6 +17,15 @@ class Pose:
     keypoints: list[Keypoint]
     overall_score: float = 0.0
 
+    def __post_init__(self) -> None:
+        """エンティティの不変条件をバリデーションします。"""
+        if self.frame_index < 0:
+            msg = f"frame_index must be >= 0, got {self.frame_index}"
+            raise ValueError(msg)
+        if not (0.0 <= self.overall_score <= 1.0):
+            msg = f"overall_score must be between 0.0 and 1.0, got {self.overall_score}"
+            raise ValueError(msg)
+
 
 @dataclass
 class AnalyzedVideo:

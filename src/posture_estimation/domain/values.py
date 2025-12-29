@@ -36,6 +36,15 @@ class Point2D:
     x: float
     y: float
 
+    def __post_init__(self) -> None:
+        """座標値の範囲をバリデーションします。"""
+        if not (0.0 <= self.x <= 1.0):
+            msg = f"x must be between 0.0 and 1.0, got {self.x}"
+            raise ValueError(msg)
+        if not (0.0 <= self.y <= 1.0):
+            msg = f"y must be between 0.0 and 1.0, got {self.y}"
+            raise ValueError(msg)
+
 
 @dataclass(frozen=True)
 class Keypoint:
@@ -50,6 +59,12 @@ class Keypoint:
     name: KeypointName
     point: Point2D
     score: float
+
+    def __post_init__(self) -> None:
+        """スコアの範囲をバリデーションします。"""
+        if not (0.0 <= self.score <= 1.0):
+            msg = f"score must be between 0.0 and 1.0, got {self.score}"
+            raise ValueError(msg)
 
 
 @dataclass(frozen=True)

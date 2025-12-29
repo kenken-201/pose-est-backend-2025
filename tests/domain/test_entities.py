@@ -69,3 +69,19 @@ def test_get_poses_for_frame() -> None:
 
     # 存在しないフレーム
     assert len(video.get_poses_for_frame(99)) == 0
+
+
+def test_pose_validation_invalid_frame_index() -> None:
+    """Pose の frame_index が負の場合に ValueError を発生させる。"""
+    import pytest
+
+    with pytest.raises(ValueError, match=r"frame_index must be >= 0"):
+        Pose(frame_index=-1, keypoints=[], overall_score=0.5)
+
+
+def test_pose_validation_invalid_overall_score() -> None:
+    """Pose の overall_score が範囲外の場合に ValueError を発生させる。"""
+    import pytest
+
+    with pytest.raises(ValueError, match=r"overall_score must be between 0.0 and 1.0"):
+        Pose(frame_index=0, keypoints=[], overall_score=1.5)
