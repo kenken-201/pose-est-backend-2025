@@ -193,8 +193,8 @@ def test_execute_no_audio_flow(
         width=1280,
         height=720,
         fps=30.0,
-        total_frames=10,
-        duration_sec=1.0,
+        total_frames=100,
+        duration_sec=3.33,  # 3秒以上
         has_audio=False,
     )
     # Dummy frames
@@ -233,3 +233,69 @@ def test_execute_cleanup_on_error(
 
     assert mock_temp_manager.cleanup.called
     mock_temp_manager.cleanup.assert_called_with("temp_error.mp4")
+
+
+def test_execute_video_too_short(
+    use_case: ProcessVideoUseCase,
+    mock_video_source: MagicMock,
+    mock_temp_manager: MagicMock,
+) -> None:
+    """動画が短すぎる場合に VideoDurationError が発生することを検証する。"""
+    from posture_estimation.domain.exceptions import VideoDurationError
+
+    # Setup
+    input_data = ProcessVideoInput(
+        input_path="input.mp4",
+        output_key="output.mp4",
+    )
+    mock_temp_manager.create_temp_path.return_value = "temp_output.mp4"
+
+    # 短い動画 (3秒未満)
+    mock_video_source.get_meta.return_value = VideoMeta(
+        width=1280,
+        height=720,
+        fps=30.0,
+        total_frames=30,
+        duration_sec=1.0,
+        has_audio=False,
+    )
+
+    # Execute & Verify
+    with pytest.raises(VideoDurationError) as exc_info:
+        use_case.execute(input_data)
+
+    assert exc_info.value.duration_sec == 1.0
+    assert "too short" in str(exc_info.value).lower()
+
+
+def test_execute_video_too_long(
+    use_case: ProcessVideoUseCase,
+    mock_video_source: MagicMock,
+    mock_temp_manager: MagicMock,
+) -> None:
+    """動画が長すぎる場合に VideoDurationError が発生することを検証する。"""
+    from posture_estimation.domain.exceptions import VideoDurationError
+
+    # Setup
+    input_data = ProcessVideoInput(
+        input_path="input.mp4",
+        output_key="output.mp4",
+    )
+    mock_temp_manager.create_temp_path.return_value = "temp_output.mp4"
+
+    # 長い動画 (7分超過)
+    mock_video_source.get_meta.return_value = VideoMeta(
+        width=1280,
+        height=720,
+        fps=30.0,
+        total_frames=30000,
+        duration_sec=500.0,
+        has_audio=False,
+    )
+
+    # Execute & Verify
+    with pytest.raises(VideoDurationError) as exc_info:
+        use_case.execute(input_data)
+
+    assert exc_info.value.duration_sec == 500.0
+    assert "too long" in str(exc_info.value).lower()

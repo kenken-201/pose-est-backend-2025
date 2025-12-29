@@ -126,22 +126,36 @@
 
 ## 🔌 フェーズ 5: API インターフェース実装 (Interface Layer)
 
-### ⬜ タスク 5-1: API コントローラー設計
+### ✅ タスク 5-1: API コントローラー設計
 
 - **Goal**: REST API エンドポイントとスキーマ定義
-- [ ] API パス設計 (`POST /api/v1/process`)
-- [ ] レスポンス設計（処理済み動画の R2 署名 URL, HTTP ステータス）
-- [ ] リクエスト/レスポンススキーマ (Pydantic) 設計
-- [ ] エラーレスポンス設計
-- [ ] **🛑 [Review] API 設計 (OpenAPI) の承認**
+- [x] API パス設計 (`POST /api/v1/process`, `GET /api/v1/health`)
+- [x] リクエスト設計 (Multipart: file + score_threshold)
+- [x] レスポンス設計（処理済み動画の R2 署名 URL, HTTP ステータス）
+- [x] リクエスト/レスポンススキーマ (Pydantic) 設計
+- [x] エラーレスポンス設計 (7 種類のエラーコード)
+- [x] **動画時間バリデーション (3 秒〜7 分)** - 定数定義済み
+- [x] **🛑 [Review] API 設計 (OpenAPI) の承認**
 
-### ⬜ タスク 5-2: Web API 実装 (TDD)
+### ✅ タスク 5-2: Web API 実装 (TDD)
 
 - **Goal**: FastAPI によるエンドポイント実装
-- [ ] ルーター実装
-- [ ] E2E テスト（`TestClient` 使用）
-- [ ] ミドルウェア（CORS, Logging）設定
-- [ ] **🛑 [Review] API 動作確認と E2E テスト結果**
+- [x] **ルーター実装 (`POST /api/v1/process`)**
+  - [x] ファイル一時保存 (UploadFile -> TempFile)
+  - [x] 動画バリデーション (フォーマット、時間制限)
+  - [x] UseCase 呼び出し + 結果変換
+  - [x] ドメイン例外 -> API 例外変換
+- [x] **E2E テスト（`TestClient` 使用）**
+  - [x] 正常系 (短い動画ファイル)
+  - [x] 異常系 (無効フォーマット、時間超過、パラメータ不正)
+  - [x] 大規模動画のモックテスト
+- [x] **ミドルウェア設定**
+  - [x] CORS (Cloudflare Pages からのアクセス許可)
+  - [x] Request Logging (処理時間、ステータス)
+  - [x] ファイルサイズ制限
+- [x] **依存関係の環境変数対応**
+  - [x] `dependencies.py` の設定読み込みを環境変数化
+- [x] **🛑 [Review] API 動作確認と E2E テスト結果**
 
 ---
 
