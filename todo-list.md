@@ -37,9 +37,20 @@
 ### ⬜ タスク 2-2: ドメイン層の実装 (TDD)
 
 - **Goal**: 純粋な Python コードによるドメインロジック実装
-- [ ] 値オブジェクトとエンティティの実装と単体テスト
-- [ ] `typing.Protocol` を使用したインターフェース定義
-- [ ] ドメイン例外の定義
+- [ ] Value Objects 拡張
+  - [ ] `Pose` に全体信頼度スコア (`overall_score`) 追加
+  - [ ] `VideoMeta` に `has_audio` フラグ追加
+- [ ] Entities 拡張
+  - [ ] `AnalyzedVideo` に複数人対応のヘルパーメソッド追加 (例: `get_poses_for_frame`)
+- [ ] Interfaces 拡張
+  - [ ] `IStorageService` 追加 (R2 アップロード, 署名 URL 発行)
+  - [ ] `IVideoSink` 追加 (処理済み動画の書き出し)
+- [ ] Domain Exceptions 定義
+  - [ ] `DomainError` 基底クラス
+  - [ ] `VideoProcessingError`, `StorageError` 等
+- [ ] 単体テスト
+  - [ ] `values.py` のテスト (バリデーション)
+  - [ ] `entities.py` のテスト (ロジック)
 - [ ] **🛑 [Review] ドメイン実装と型安全性の確認**
 
 ---
