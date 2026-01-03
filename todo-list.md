@@ -203,10 +203,17 @@
 
 - **Goal**: `dev.kenken-pose-est.online` 環境での動作保証
 - **構成**: フロントエンド (`dev.kenken-pose-est.online`) / バックエンド (`api.kenken-pose-est.online`) は別オリジン → **CORS 必須**
-- [ ] CORS 設定の確認
-  - [ ] `CORS_ORIGINS=https://dev.kenken-pose-est.online` の環境変数設定
-  - [ ] フロントエンドからの疎通テスト
-- [ ] ヘルスチェックエンドポイントの連携確認
+- **現状分析:**
+  - ✅ `main.py` に `_get_cors_origins()` で環境変数 `CORS_ORIGINS` を読み込む仕組みあり
+  - ⚠️ **問題発見**: `allow_origins=["*"]` と `allow_credentials=True` の同時指定はブラウザで無効
+- **実施内容:**
+  - [ ] CORS 設定のバグ修正
+    - [ ] `CORS_ORIGINS="*"` の場合は `allow_credentials=False` に自動切り替え
+    - [ ] ログで警告を出力
+  - [ ] 環境変数設定の確認
+    - [ ] `CORS_ORIGINS=https://dev.kenken-pose-est.online` を GCP Cloud Run に設定
+  - [ ] ヘルスチェックエンドポイントの連携確認
+    - [ ] Cloud Run のヘルスチェック設定が `/api/v1/health` を参照しているか確認
 
 ### ⬜ タスク 7-3: CI/CD 統合準備
 
