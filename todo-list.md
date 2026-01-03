@@ -182,18 +182,36 @@
 ### ⬜ タスク 7-1: Docker イメージ最適化
 
 - **Goal**: イメージサイズの削減とビルド/プッシュ時間の短縮
-- [ ] `.dockerignore` の見直し (不要ファイルの徹底排除)
-- [ ] `tensorflow` -> `tensorflow-cpu` への切り替え (Linux ビルド時のサイズ削減)
-- [ ] マルチステージビルドの効率化確認
+- **現状分析 (既に実施済み):**
+  - ✅ `.dockerignore`: docs/, \*.md, .git 等除外済み
+  - ✅ マルチステージビルド: builder/runtime 分離済み
+  - ✅ ベースイメージ: `python:3.11-slim` 使用中
+  - ✅ キャッシュ最適化: requirements.txt を src より先にコピー済み
+  - ❌ `tensorflow-cpu`: 依存関係エラーで不可
+- **追加最適化案:**
+  - [ ] `opencv-python` → `opencv-python-headless` への切り替え
+    - GUI 機能不要のため ~200MB 削減可能
+    - `libgl1`, `libglib2.0-0` 依存も削除可能に
+  - [ ] BuildKit キャッシュ活用 (`--mount=type=cache,target=/root/.cache/pip`)
+  - [ ] 最終イメージサイズ計測と記録
+
+> **Note (poetry.lock vs requirements.txt):**
+> 現在の `poetry export` アプローチは、runtime イメージに poetry を含めない（~50MB 削減）ため効率的。
+> キャッシュは `pyproject.toml` + `poetry.lock` のコピー時点で効いている。
 
 ### ⬜ タスク 7-2: 環境適応 (Dev Environment)
 
 - **Goal**: `dev.kenken-pose-est.online` 環境での動作保証
-- [ ] CORS 設定の確認と環境変数制御 (`CORS_ORIGINS`)
+- **構成**: フロントエンド (`dev.kenken-pose-est.online`) / バックエンド (`api.kenken-pose-est.online`) は別オリジン → **CORS 必須**
+- [ ] CORS 設定の確認
+  - [ ] `CORS_ORIGINS=https://dev.kenken-pose-est.online` の環境変数設定
+  - [ ] フロントエンドからの疎通テスト
 - [ ] ヘルスチェックエンドポイントの連携確認
 
 ### ⬜ タスク 7-3: CI/CD 統合準備
 
 - **Goal**: 自動デプロイに向けた準備
 - [ ] GitHub Actions ワークフロー (`.github/workflows/deploy.yml`) のドラフト作成
-- [ ] `push-backend-image.sh` との連携設計
+  - amd64 ネイティブビルド (ローカル M1 クロスビルドより高速)
+  - `push-backend-image.sh` のロジックをワークフローに移植
+- [ ] シークレット設定 (GCP_SA_KEY, ARTIFACT_REGISTRY_URL 等)
