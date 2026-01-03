@@ -9,16 +9,16 @@ services:
     environment:
       - PORT=8080
       - LOG_LEVEL=INFO
-      # ML Settings
+      # ML 設定
       - ML_MODEL_URL=${ML_MODEL_URL:-https://tfhub.dev/google/movenet/multipose/lightning/1}
       - ML_SCORE_THRESHOLD=${ML_SCORE_THRESHOLD:-0.3}
       - ML_TARGET_SIZE=${ML_TARGET_SIZE:-256}
-      # R2 Storage Settings (Create .env file to set these)
+      # R2 ストレージ設定 (.env ファイルで設定してください)
       - R2_ENDPOINT_URL=${R2_ENDPOINT_URL}
       - R2_ACCESS_KEY=${R2_ACCESS_KEY}
       - R2_SECRET_KEY=${R2_SECRET_KEY}
       - R2_BUCKET_NAME=${R2_BUCKET_NAME}
-      # Application Settings
+      # アプリケーション設定
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - MAX_UPLOAD_SIZE_MB=${MAX_UPLOAD_SIZE_MB:-100}
     healthcheck:
