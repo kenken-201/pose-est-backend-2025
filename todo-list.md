@@ -179,7 +179,7 @@
 
 ## 🚀 フェーズ 7: デプロイ最適化と環境適応 (Optimization & CI/CD)
 
-### ⬜ タスク 7-1: Docker イメージ最適化
+### ✅ タスク 7-1: Docker イメージ最適化
 
 - **Goal**: イメージサイズの削減とビルド/プッシュ時間の短縮
 - **現状分析 (既に実施済み):**
@@ -188,12 +188,12 @@
   - ✅ ベースイメージ: `python:3.11-slim` 使用中
   - ✅ キャッシュ最適化: requirements.txt を src より先にコピー済み
   - ❌ `tensorflow-cpu`: 依存関係エラーで不可
-- **追加最適化案:**
-  - [ ] `opencv-python` → `opencv-python-headless` への切り替え
+- **実施内容:**
+  - [x] `opencv-python` → `opencv-python-headless` への切り替え
     - GUI 機能不要のため ~200MB 削減可能
-    - `libgl1`, `libglib2.0-0` 依存も削除可能に
-  - [ ] BuildKit キャッシュ活用 (`--mount=type=cache,target=/root/.cache/pip`)
-  - [ ] 最終イメージサイズ計測と記録
+    - `libgl1` 依存を削除
+  - [x] BuildKit キャッシュ活用 (`--mount=type=cache,target=/root/.cache/pip`)
+  - [x] 最終イメージサイズ計測および動作確認 (ユーザー側で実施)
 
 > **Note (poetry.lock vs requirements.txt):**
 > 現在の `poetry export` アプローチは、runtime イメージに poetry を含めない（~50MB 削減）ため効率的。

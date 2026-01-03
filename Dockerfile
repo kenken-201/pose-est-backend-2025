@@ -4,7 +4,8 @@ FROM python:3.11-slim as builder
 WORKDIR /app
 
 # Install Poetry
-RUN pip install --no-cache-dir poetry==1.7.1
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir poetry==1.7.1
 
 # Copy configuration files
 COPY pyproject.toml poetry.lock ./
@@ -23,11 +24,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app/src
 
 # Install system dependencies
-# libgl1-mesa-glx: required by opencv-python
-# libglib2.0-0: required by opencv-python
+# libgl1: removed (not required for opencv-python-headless)
+# libglib2.0-0: required by opencv-python-headless
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    libgl1 \
     libglib2.0-0 \
     curl \
     && apt-get clean \
@@ -35,7 +35,8 @@ RUN apt-get update \
 
 # Install Python dependencies from builder
 COPY --from=builder /app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY src ./src
