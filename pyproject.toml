@@ -33,6 +33,7 @@ pydantic = {extras = ["email"], version = "^2.7.1"}
 dependency-injector = "^4.41.0"
 python-multipart = "^0.0.21"  # ファイルアップロードのために追加
 boto3 = "^1.42.18"  # R2ストレージアクセス
+ffmpeg-python = "^0.2.0"  # ffmpeg wrapper
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"
