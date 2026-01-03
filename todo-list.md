@@ -174,3 +174,26 @@
 - [x] API 仕様書 (`openapi.yaml`) のエクスポート
 - [x] 開発者ガイドラインの最終更新
 - [x] **🛑 [Review] 最終納品物確認**
+
+---
+
+## 🚀 フェーズ 7: デプロイ最適化と環境適応 (Optimization & CI/CD)
+
+### ⬜ タスク 7-1: Docker イメージ最適化
+
+- **Goal**: イメージサイズの削減とビルド/プッシュ時間の短縮
+- [ ] `.dockerignore` の見直し (不要ファイルの徹底排除)
+- [ ] `tensorflow` -> `tensorflow-cpu` への切り替え (Linux ビルド時のサイズ削減)
+- [ ] マルチステージビルドの効率化確認
+
+### ⬜ タスク 7-2: 環境適応 (Dev Environment)
+
+- **Goal**: `dev.kenken-pose-est.online` 環境での動作保証
+- [ ] CORS 設定の確認と環境変数制御 (`CORS_ORIGINS`)
+- [ ] ヘルスチェックエンドポイントの連携確認
+
+### ⬜ タスク 7-3: CI/CD 統合準備
+
+- **Goal**: 自動デプロイに向けた準備
+- [ ] GitHub Actions ワークフロー (`.github/workflows/deploy.yml`) のドラフト作成
+- [ ] `push-backend-image.sh` との連携設計
