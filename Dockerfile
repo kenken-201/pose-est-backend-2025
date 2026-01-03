@@ -4,6 +4,8 @@ FROM python:3.11-slim as builder
 WORKDIR /app
 
 # Install Poetry
+# --mount=type=cache: Speeds up rebuilds by caching pip downloads on host
+# --no-cache-dir: Prevents cache from being stored in the final image layer
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir poetry==1.7.1
 
@@ -34,6 +36,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies from builder
+# BuildKit cache mount accelerates rebuilds while --no-cache-dir keeps image lean
 COPY --from=builder /app/requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r requirements.txt

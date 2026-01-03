@@ -24,15 +24,15 @@ documentation = "https://yourusername.github.io/pose-est-backend/"
 python = "^3.11.14"
 fastapi = "^0.127.1"
 tensorflow = {version = "2.18.1"}
-uvicorn = {extras = ["standard"], version = "^0.40.0"}
+tensorflow-hub = "^0.16.1"  # MoveNetモデルのために追加
+opencv-python-headless = "^4.12.0.88"  # 画像処理 (headless版: GUI不要)
+pillow = "^12.0.0"  # 画像処理のために追加
 numpy = "^2.0.2"
+uvicorn = {extras = ["standard"], version = "^0.40.0"}
 pydantic = {extras = ["email"], version = "^2.7.1"}
 dependency-injector = "^4.41.0"
-tensorflow-hub = "^0.16.1"  # MoveNetモデルのために追加
-pillow = "^12.0.0"  # 画像処理のために追加
 python-multipart = "^0.0.21"  # ファイルアップロードのために追加
-boto3 = "^1.42.18"
-opencv-python-headless = "^4.12.0.88"
+boto3 = "^1.42.18"  # R2ストレージアクセス
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"
