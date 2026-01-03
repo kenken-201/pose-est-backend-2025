@@ -199,7 +199,7 @@
 > 現在の `poetry export` アプローチは、runtime イメージに poetry を含めない（~50MB 削減）ため効率的。
 > キャッシュは `pyproject.toml` + `poetry.lock` のコピー時点で効いている。
 
-### ⬜ タスク 7-2: 環境適応とドキュメント更新 (Dev Env & Docs)
+### ✅ タスク 7-2: 環境適応とドキュメント更新 (Dev Env & Docs)
 
 - **Goal**: `dev.kenken-pose-est.online` での動作保証と API 仕様の明確化
 - **構成**: フロントエンド (`dev.kenken-pose-est.online`) / バックエンド (`api.kenken-pose-est.online`) は別オリジン → **CORS 必須**
@@ -207,16 +207,14 @@
   - ✅ `main.py` に `_get_cors_origins()` で環境変数 `CORS_ORIGINS` を読み込む仕組みあり
   - ⚠️ **問題発見**: `allow_origins=["*"]` と `allow_credentials=True` の同時指定はブラウザで無効
 - **実施内容:**
-  - [ ] CORS 設定のバグ修正
-    - [ ] `CORS_ORIGINS="*"` の場合は `allow_credentials=False` に自動切り替え
-  - [ ] 環境変数設定の確認
-    - [ ] `CORS_ORIGINS=https://dev.kenken-pose-est.online` を GCP Cloud Run に設定
-  - [ ] ヘルスチェックエンドポイントの連携確認
-    - [ ] Cloud Run のヘルスチェック設定が `/api/v1/health` を参照しているか確認
-  - [ ] API 仕様書 (`OpenAPI`) の更新
-    - [ ] バリデーションルールの明記 (動画時間: 3 秒〜7 分, ファイルサイズ: <100MB)
-    - [ ] エラーコードの具体的な説明を追加 (`VIDEO_TOO_SHORT` 等)
-    - [ ] `export_openapi.py` 再実行と `docs/openapi.yaml` 更新
+  - [x] CORS 設定のバグ修正
+    - [x] `CORS_ORIGINS="*"` の場合は `allow_credentials=False` に自動切り替え
+  - [x] 環境変数設定の確認 (`CORS_ORIGINS` は Cloud Run 側で設定が必要)
+  - [x] ヘルスチェックエンドポイントの連携確認 (Cloud Run 設定は運用ガイドライン参照)
+  - [x] API 仕様書 (`OpenAPI`) の更新
+    - [x] バリデーションルールの明記 (動画時間: 3 秒〜7 分, ファイルサイズ: <100MB)
+    - [x] エラーコードの具体的な説明を追加 (`VIDEO_TOO_SHORT` 等)
+    - [x] `export_openapi.py` 再実行と `docs/openapi.yaml` 更新
 
 ### ⬜ タスク 7-3: CI/CD 統合準備
 

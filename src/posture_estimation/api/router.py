@@ -57,15 +57,77 @@ def health_check() -> HealthResponse:
 @router.post(
     "/process",
     response_model=ProcessVideoResponse,
-    responses={
-        400: {"model": ErrorResponse, "description": "無効なリクエスト"},
-        413: {"model": ErrorResponse, "description": "ファイルサイズ超過"},
-        422: {"model": ErrorResponse, "description": "パラメータ不正"},
-        500: {"model": ErrorResponse, "description": "サーバーエラー"},
-        503: {"model": ErrorResponse, "description": "サービス利用不可"},
-    },
     summary="動画処理",
-    description="動画をアップロードし、姿勢推定結果を含む動画を生成します。",
+    description="""
+    アップロードされた動画に対して姿勢推定を行い、結果を返します。
+    
+    ## 制約事項
+    
+    - **動画時間**: 3.0秒以上、420.0秒 (7分) 以内
+    - **ファイルサイズ**: 100MB 以下
+    - **フォーマット**: 一般的な動画フォーマット (MP4, MOV, AVI 等)
+    - **音声**: 音声トラックが含まれる場合、出力動画にも保持されます
+    """,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "無効なリクエスト (動画時間外、フォーマット不正)",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "VIDEO_TOO_SHORT": {
+                            "summary": "動画が短すぎる",
+                            "value": {"error": {"code": "VIDEO_TOO_SHORT", "message": "Video duration 1.5s is too short (min: 3.0s)"}}
+                        },
+                        "VIDEO_TOO_LONG": {
+                            "summary": "動画が長すぎる",
+                            "value": {"error": {"code": "VIDEO_TOO_LONG", "message": "Video duration 500.0s is too long (max: 420.0s)"}}
+                        },
+                        "INVALID_VIDEO_FORMAT": {
+                            "summary": "無効なフォーマット",
+                            "value": {"error": {"code": "INVALID_VIDEO_FORMAT", "message": "Unable to read video file"}}
+                        }
+                    }
+                }
+            }
+        },
+        413: {
+            "model": ErrorResponse,
+            "description": "ファイルサイズ超過 (Max: 100MB)",
+            "content": {
+                "application/json": {
+                    "example": {"error": {"code": "FILE_TOO_LARGE", "message": "File size 150MB exceeds limit of 100MB"}}
+                }
+            }
+        },
+        422: {
+            "model": ErrorResponse,
+            "description": "パラメータ不正 (閾値範囲外など)",
+            "content": {
+                "application/json": {
+                    "example": {"error": {"code": "INVALID_PARAMETER", "message": "Score threshold must be between 0.0 and 1.0"}}
+                }
+            }
+        },
+        500: {
+            "model": ErrorResponse,
+            "description": "サーバー内部エラー (推論失敗など)",
+            "content": {
+                "application/json": {
+                    "example": {"error": {"code": "MODEL_INFERENCE_ERROR", "message": "Failed to run pose estimation"}}
+                }
+            }
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "サービス利用不可 (ストレージエラーなど)",
+            "content": {
+                "application/json": {
+                    "example": {"error": {"code": "STORAGE_SERVICE_UNAVAILABLE", "message": "Failed to upload processed video"}}
+                }
+            }
+        },
+    },
 )
 def process_video(
     file: Annotated[UploadFile, File(description="処理対象の動画ファイル")],
