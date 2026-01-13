@@ -2,7 +2,7 @@ name: Deploy Backend
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "develop"]
     paths-ignore:
       - "docs/**"
       - "**.md"
@@ -37,6 +37,7 @@ jobs:
     defaults:
       run:
         shell: bash
+
     steps:
       - uses: actions/checkout@v4
 
@@ -74,11 +75,25 @@ jobs:
       - name: Determine Environment
         id: env
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          # Default to Dev
+          TARGET_ENV="dev"
+
+          # Branch-based Logic
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            TARGET_ENV="prod"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            TARGET_ENV="dev"
+          fi
+
+          # Manual Trigger Override
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+             TARGET_ENV="prod"
+          fi
+
+          if [[ "$TARGET_ENV" == "prod" ]]; then
             echo "Target: Production"
             echo "service_name=${{ env.SERVICE_NAME_PROD }}" >> $GITHUB_OUTPUT
             
-            # Mask secrets in logs (GitHub Actions handles this automatically for actual secrets)
             echo "cors_origins=${{ secrets.CORS_ORIGINS_PROD }}" >> $GITHUB_OUTPUT
             echo "r2_access_key=${{ secrets.R2_ACCESS_KEY_PROD }}" >> $GITHUB_OUTPUT
             echo "r2_secret_key=${{ secrets.R2_SECRET_KEY_PROD }}" >> $GITHUB_OUTPUT
