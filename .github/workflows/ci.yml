@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main, develop]
 
 # 実行権限を最小限に制限（セキュリティのベストプラクティス）
 permissions:
@@ -41,8 +41,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
 
       # 1. Lint & Format Check (Ruff)
       # 最も高速なチェックを最初に実行し、失敗時は即座に終了（Fail-Fast）
@@ -53,13 +52,13 @@ jobs:
 
       # 2. Static Type Check (Mypy)
       - name: Type check with Mypy
-        run: poetry run mypy app
+        run: poetry run mypy src/
 
       # 3. Unit Tests (Pytest)
       # 3.11.14の並列性能を活かし、カバレッジも測定
       - name: Run tests with Pytest
         run: |
-          poetry run pytest --cov=app --cov-report=xml
+          poetry run pytest --cov=src --cov-report=xml
 
       # カバレッジレポートのアップロード（任意）
       - name: Upload coverage to Codecov

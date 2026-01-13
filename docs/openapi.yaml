@@ -1,17 +1,15 @@
 openapi: 3.1.0
 info:
   title: Pose Estimation Backend
-  description: "TensorFlow MoveNet \u3092\u4F7F\u7528\u3057\u305F\u59FF\u52E2\u63A8\
-    \u5B9A\u30D0\u30C3\u30AF\u30A8\u30F3\u30C9 API"
+  description: TensorFlow MoveNet を使用した姿勢推定バックエンド API
   version: 1.0.0
 paths:
   /api/v1/health:
     get:
       tags:
       - video
-      summary: "\u30D8\u30EB\u30B9\u30C1\u30A7\u30C3\u30AF"
-      description: "API \u306E\u7A3C\u50CD\u72B6\u614B\u3092\u78BA\u8A8D\u3057\u307E\
-        \u3059\u3002"
+      summary: ヘルスチェック
+      description: API の稼働状態を確認します。
       operationId: health_check_api_v1_health_get
       responses:
         '200':
@@ -24,10 +22,10 @@ paths:
     post:
       tags:
       - video
-      summary: "\u52D5\u753B\u51E6\u7406"
-      description: "\u52D5\u753B\u3092\u30A2\u30C3\u30D7\u30ED\u30FC\u30C9\u3057\u3001\
-        \u59FF\u52E2\u63A8\u5B9A\u7D50\u679C\u3092\u542B\u3080\u52D5\u753B\u3092\u751F\
-        \u6210\u3057\u307E\u3059\u3002"
+      summary: 動画処理
+      description: "アップロードされた動画に対して姿勢推定を行い、結果を返します。\n    \n    ## 制約事項\n    \n   \
+        \ - **動画時間**: 3.0秒以上、420.0秒 (7分) 以内\n    - **ファイルサイズ**: 100MB 以下\n    - **フォーマット**:\
+        \ 一般的な動画フォーマット (MP4, MOV, AVI 等)\n    - **音声**: 音声トラックが含まれる場合、出力動画にも保持されます"
       operationId: process_video_api_v1_process_post
       requestBody:
         content:
@@ -43,35 +41,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProcessVideoResponse'
         '400':
-          description: "\u7121\u52B9\u306A\u30EA\u30AF\u30A8\u30B9\u30C8"
+          description: 無効なリクエスト (動画時間外、フォーマット不正)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                VIDEO_TOO_SHORT:
+                  summary: 動画が短すぎる
+                  value:
+                    error:
+                      code: VIDEO_TOO_SHORT
+                      message: 'Video duration 1.5s is too short (min: 3.0s)'
+                VIDEO_TOO_LONG:
+                  summary: 動画が長すぎる
+                  value:
+                    error:
+                      code: VIDEO_TOO_LONG
+                      message: 'Video duration 500.0s is too long (max: 420.0s)'
+                INVALID_VIDEO_FORMAT:
+                  summary: 無効なフォーマット
+                  value:
+                    error:
+                      code: INVALID_VIDEO_FORMAT
+                      message: Unable to read video file
         '413':
-          description: "\u30D5\u30A1\u30A4\u30EB\u30B5\u30A4\u30BA\u8D85\u904E"
+          description: 'ファイルサイズ超過 (Max: 100MB)'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: FILE_TOO_LARGE
+                  message: File size 150MB exceeds limit of 100MB
         '422':
-          description: "\u30D1\u30E9\u30E1\u30FC\u30BF\u4E0D\u6B63"
+          description: パラメータ不正 (閾値範囲外など)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_PARAMETER
+                  message: Score threshold must be between 0.0 and 1.0
         '500':
-          description: "\u30B5\u30FC\u30D0\u30FC\u30A8\u30E9\u30FC"
+          description: サーバー内部エラー (推論失敗など)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MODEL_INFERENCE_ERROR
+                  message: Failed to run pose estimation
         '503':
-          description: "\u30B5\u30FC\u30D3\u30B9\u5229\u7528\u4E0D\u53EF"
+          description: サービス利用不可 (ストレージエラーなど)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: STORAGE_SERVICE_UNAVAILABLE
+                  message: Failed to upload processed video
 components:
   schemas:
     Body_process_video_api_v1_process_post:
@@ -80,14 +113,13 @@ components:
           type: string
           format: binary
           title: File
-          description: "\u51E6\u7406\u5BFE\u8C61\u306E\u52D5\u753B\u30D5\u30A1\u30A4\
-            \u30EB"
+          description: 処理対象の動画ファイル
         score_threshold:
           type: number
           maximum: 1.0
           minimum: 0.0
           title: Score Threshold
-          description: "\u59FF\u52E2\u691C\u51FA\u306E\u95BE\u5024 (0.0-1.0)"
+          description: 姿勢検出の閾値 (0.0-1.0)
           default: 0.2
       type: object
       required:
@@ -98,63 +130,60 @@ components:
         code:
           type: string
           title: Code
-          description: "\u30A8\u30E9\u30FC\u30B3\u30FC\u30C9"
+          description: エラーコード
         message:
           type: string
           title: Message
-          description: "\u30A8\u30E9\u30FC\u30E1\u30C3\u30BB\u30FC\u30B8"
+          description: エラーメッセージ
       type: object
       required:
       - code
       - message
       title: ErrorDetail
-      description: "\u30A8\u30E9\u30FC\u8A73\u7D30\u30B9\u30AD\u30FC\u30DE\u3002"
+      description: エラー詳細スキーマ。
     ErrorResponse:
       properties:
         error:
           $ref: '#/components/schemas/ErrorDetail'
-          description: "\u30A8\u30E9\u30FC\u8A73\u7D30"
+          description: エラー詳細
       type: object
       required:
       - error
       title: ErrorResponse
-      description: "\u30A8\u30E9\u30FC\u30EC\u30B9\u30DD\u30F3\u30B9\u30B9\u30AD\u30FC\
-        \u30DE\u3002"
+      description: エラーレスポンススキーマ。
     HealthResponse:
       properties:
         status:
           type: string
           title: Status
-          description: "\u30B9\u30C6\u30FC\u30BF\u30B9 (healthy)"
+          description: ステータス (healthy)
         version:
           type: string
           title: Version
-          description: "API \u30D0\u30FC\u30B8\u30E7\u30F3"
+          description: API バージョン
       type: object
       required:
       - status
       - version
       title: HealthResponse
-      description: "\u30D8\u30EB\u30B9\u30C1\u30A7\u30C3\u30AF\u306E\u30EC\u30B9\u30DD\
-        \u30F3\u30B9\u30B9\u30AD\u30FC\u30DE\u3002"
+      description: ヘルスチェックのレスポンススキーマ。
     ProcessVideoResponse:
       properties:
         signed_url:
           type: string
           title: Signed Url
-          description: "\u51E6\u7406\u6E08\u307F\u52D5\u753B\u306E\u7F72\u540D\u4ED8\
-            \u304D URL"
+          description: 処理済み動画の署名付き URL
         video_meta:
           $ref: '#/components/schemas/VideoMetaResponse'
-          description: "\u52D5\u753B\u30E1\u30BF\u30C7\u30FC\u30BF"
+          description: 動画メタデータ
         total_poses:
           type: integer
           title: Total Poses
-          description: "\u691C\u51FA\u3055\u308C\u305F\u5EF6\u3079\u59FF\u52E2\u6570"
+          description: 検出された延べ姿勢数
         processing_time_sec:
           type: number
           title: Processing Time Sec
-          description: "\u51E6\u7406\u6642\u9593 (\u79D2)"
+          description: 処理時間 (秒)
       type: object
       required:
       - signed_url
@@ -162,30 +191,29 @@ components:
       - total_poses
       - processing_time_sec
       title: ProcessVideoResponse
-      description: "\u52D5\u753B\u51E6\u7406\u7D50\u679C\u306E\u30EC\u30B9\u30DD\u30F3\
-        \u30B9\u30B9\u30AD\u30FC\u30DE\u3002"
+      description: 動画処理結果のレスポンススキーマ。
     VideoMetaResponse:
       properties:
         width:
           type: integer
           title: Width
-          description: "\u52D5\u753B\u306E\u5E45 (\u30D4\u30AF\u30BB\u30EB)"
+          description: 動画の幅 (ピクセル)
         height:
           type: integer
           title: Height
-          description: "\u52D5\u753B\u306E\u9AD8\u3055 (\u30D4\u30AF\u30BB\u30EB)"
+          description: 動画の高さ (ピクセル)
         fps:
           type: number
           title: Fps
-          description: "\u30D5\u30EC\u30FC\u30E0\u30EC\u30FC\u30C8"
+          description: フレームレート
         duration_sec:
           type: number
           title: Duration Sec
-          description: "\u52D5\u753B\u6642\u9593 (\u79D2)"
+          description: 動画時間 (秒)
         has_audio:
           type: boolean
           title: Has Audio
-          description: "\u97F3\u58F0\u30C8\u30E9\u30C3\u30AF\u306E\u6709\u7121"
+          description: 音声トラックの有無
       type: object
       required:
       - width
@@ -194,5 +222,4 @@ components:
       - duration_sec
       - has_audio
       title: VideoMetaResponse
-      description: "\u52D5\u753B\u30E1\u30BF\u30C7\u30FC\u30BF\u306E\u30EC\u30B9\u30DD\
-        \u30F3\u30B9\u30B9\u30AD\u30FC\u30DE\u3002"
+      description: 動画メタデータのレスポンススキーマ。

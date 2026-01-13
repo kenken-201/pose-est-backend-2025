@@ -53,7 +53,7 @@ def get_container() -> AppContainer:
 
 
 def get_process_video_use_case(
-    container: Annotated[AppContainer, Depends(get_container)]
+    container: Annotated[AppContainer, Depends(get_container)],
 ) -> ProcessVideoUseCase:
     """ProcessVideoUseCase を取得します。"""
     return container.process_video_use_case()
@@ -72,14 +72,10 @@ def get_max_upload_size_bytes() -> int:
 
 # 型エイリアス
 ProcessVideoUseCaseDep = Annotated[
-    ProcessVideoUseCase,
-    Depends(get_process_video_use_case)
+    ProcessVideoUseCase, Depends(get_process_video_use_case)
 ]
 
-TempManagerDep = Annotated[
-    TempFileManager,
-    Depends(get_temp_manager)
-]
+TempManagerDep = Annotated[TempFileManager, Depends(get_temp_manager)]
 
 
 def create_video_source(video_path: str) -> OpenCVVideoSource:

@@ -174,3 +174,66 @@
 - [x] API 仕様書 (`openapi.yaml`) のエクスポート
 - [x] 開発者ガイドラインの最終更新
 - [x] **🛑 [Review] 最終納品物確認**
+
+---
+
+## 🚀 フェーズ 7: デプロイ最適化と環境適応 (Optimization & CI/CD)
+
+### ✅ タスク 7-1: Docker イメージ最適化
+
+- **Goal**: イメージサイズの削減とビルド/プッシュ時間の短縮
+- **現状分析 (既に実施済み):**
+  - ✅ `.dockerignore`: docs/, \*.md, .git 等除外済み
+  - ✅ マルチステージビルド: builder/runtime 分離済み
+  - ✅ ベースイメージ: `python:3.11-slim` 使用中
+  - ✅ キャッシュ最適化: requirements.txt を src より先にコピー済み
+  - ❌ `tensorflow-cpu`: 依存関係エラーで不可
+- **実施内容:**
+  - [x] `opencv-python` → `opencv-python-headless` への切り替え
+    - GUI 機能不要のため ~200MB 削減可能
+    - `libgl1` 依存を削除
+  - [x] BuildKit キャッシュ活用 (`--mount=type=cache,target=/root/.cache/pip`)
+  - [x] 最終イメージサイズ計測および動作確認 (ユーザー側で実施)
+
+> **Note (poetry.lock vs requirements.txt):**
+> 現在の `poetry export` アプローチは、runtime イメージに poetry を含めない（~50MB 削減）ため効率的。
+> キャッシュは `pyproject.toml` + `poetry.lock` のコピー時点で効いている。
+
+### ✅ タスク 7-2: 環境適応とドキュメント更新 (Dev Env & Docs)
+
+- **Goal**: `dev.kenken-pose-est.online` での動作保証と API 仕様の明確化
+- **構成**: フロントエンド (`dev.kenken-pose-est.online`) / バックエンド (`api.kenken-pose-est.online`) は別オリジン → **CORS 必須**
+- **現状分析:**
+  - ✅ `main.py` に `_get_cors_origins()` で環境変数 `CORS_ORIGINS` を読み込む仕組みあり
+  - ⚠️ **問題発見**: `allow_origins=["*"]` と `allow_credentials=True` の同時指定はブラウザで無効
+- **実施内容:**
+  - [x] CORS 設定のバグ修正
+    - [x] `CORS_ORIGINS="*"` の場合は `allow_credentials=False` に自動切り替え
+  - [x] 環境変数設定の確認 (`CORS_ORIGINS` は Cloud Run 側で設定が必要)
+  - [x] ヘルスチェックエンドポイントの連携確認 (Cloud Run 設定は運用ガイドライン参照)
+  - [x] API 仕様書 (`OpenAPI`) の更新
+    - [x] バリデーションルールの明記 (動画時間: 3 秒〜7 分, ファイルサイズ: <100MB)
+    - [x] エラーコードの具体的な説明を追加 (`VIDEO_TOO_SHORT` 等)
+    - [x] `export_openapi.py` 再実行と `docs/openapi.yaml` 更新
+
+### ✅ タスク 7-3: CI/CD 統合準備
+
+- **Goal**: 自動デプロイに向けた準備 (GitHub Actions)
+- [x] GitHub Actions ワークフロー (`.github/workflows/deploy.yml`) のドラフト作成
+  - amd64 ネイティブビルド (ローカル M1 クロスビルドより高速)
+  - `push-backend-image.sh` (または `gcloud builds submit`) のロジックを移植
+  - Dev/Prod の環境分岐の仕組みを構築
+- [x] 環境変数の管理 (GitHub Secrets)
+  - `GCP_SA_KEY`
+  - `R2_ACCESS_KEY` 等 (ワークフロー内で参照設定済み)
+
+### ✅ タスク 7-4: 本番環境設定 & CORS 更新
+
+- **Goal**: 本番運用に向けたアクセスポリシーの適用とデプロイフロー修正
+- [x] ワークフロー (`deploy.yml`) のブランチ戦略修正
+  - `develop` ブランチ -> Dev 環境
+  - `main` ブランチ -> Prod 環境
+- [x] CORS 設定の環境分離 (Dev/Prod)
+  - 参照: `INFRA_HANDOVER.md.resolved`
+  - GitHub Secrets への設定 (完了済みを確認)
+- [ ] Prod 環境への初回デプロイ検証 (CI 経由: ユーザー作業)

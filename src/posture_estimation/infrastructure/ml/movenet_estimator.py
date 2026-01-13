@@ -174,9 +174,7 @@ class MoveNetPoseEstimator(IPoseEstimator):
         pad_y = (self._target_size - h_new) // 2
         pad_x = (self._target_size - w_new) // 2
 
-        padded = np.zeros(
-            (self._target_size, self._target_size, 3), dtype=np.uint8
-        )
+        padded = np.zeros((self._target_size, self._target_size, 3), dtype=np.uint8)
         padded[pad_y : pad_y + h_new, pad_x : pad_x + w_new, :] = resized
 
         # テンソル変換
@@ -250,9 +248,7 @@ class MoveNetPoseEstimator(IPoseEstimator):
 
         # グラフモードで推論実行
         output_tensor = self._inference_fn(input_tensor)
-        keypoints_with_scores: NDArray[np.floating[Any]] = (
-            output_tensor.numpy()
-        )
+        keypoints_with_scores: NDArray[np.floating[Any]] = output_tensor.numpy()
 
         # 結果解析
         results: list[Pose] = []
@@ -265,12 +261,8 @@ class MoveNetPoseEstimator(IPoseEstimator):
                 continue
 
             # キーポイント解析 (逆変換含むベクトル化)
-            keypoints_raw = instance[:_KEYPOINT_DATA_SIZE].reshape(
-                (_NUM_KEYPOINTS, 3)
-            )
-            parsed_keypoints = self._parse_keypoints_vectorized(
-                keypoints_raw, pad_info
-            )
+            keypoints_raw = instance[:_KEYPOINT_DATA_SIZE].reshape((_NUM_KEYPOINTS, 3))
+            parsed_keypoints = self._parse_keypoints_vectorized(keypoints_raw, pad_info)
 
             results.append(
                 Pose(

@@ -1,3 +1,4 @@
+import logging
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -9,6 +10,8 @@ from fastapi.responses import RedirectResponse
 from posture_estimation.api.exceptions import register_exception_handlers
 from posture_estimation.api.middleware import RequestLoggingMiddleware
 from posture_estimation.api.router import router as api_router
+
+logger = logging.getLogger(__name__)
 
 
 def _get_cors_origins() -> list[str]:
@@ -39,10 +42,19 @@ app = FastAPI(
 )
 
 # CORS ミドルウェア
+origins = _get_cors_origins()
+is_wildcard = origins == ["*"]
+
+if is_wildcard:
+    logger.warning(
+        "CORS_ORIGINS is set to '*'. allow_credentials is disabled. "
+        "For production, specify explicit origins."
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_get_cors_origins(),
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=not is_wildcard,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )

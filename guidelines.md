@@ -37,12 +37,29 @@
 
 ## 2. 品質基準 (Definition of Done)
 
-各タスクの完了には、以下のコマンドがすべて成功する必要があります。妥協は許されません。
+各タスクの完了には、品質チェックスクリプトがすべて成功する必要があります。妥協は許されません。
 
-- `ruff check .` (Lint: エラー・警告ゼロ)
-- `mypy --strict .` (Type Check: 型エラーゼロ)
-- `pytest` (Test: 全テスト通過)
-- `pytest --cov` (Coverage: 対象モジュールのカバレッジ 90%以上をキープする)
+### 2.1 品質チェックスクリプト
+
+```bash
+# 全チェック実行 (推奨)
+./scripts/check.sh
+
+# 個別チェック
+./scripts/check.sh lint   # Ruff (Lint)
+./scripts/check.sh type   # Mypy (Type Check)
+./scripts/check.sh test   # Pytest (テストのみ)
+./scripts/check.sh cov    # Pytest + Coverage
+```
+
+### 2.2 チェック項目
+
+| 項目           | コマンド       | 基準             |
+| -------------- | -------------- | ---------------- |
+| **Lint**       | `ruff check .` | エラー・警告ゼロ |
+| **Type Check** | `mypy src/`    | 型エラーゼロ     |
+| **Test**       | `pytest`       | 全テスト通過     |
+| **Coverage**   | `pytest --cov` | 90% 以上         |
 
 **コードスタイル要件:**
 

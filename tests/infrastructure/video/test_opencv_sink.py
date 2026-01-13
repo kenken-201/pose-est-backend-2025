@@ -1,4 +1,3 @@
-
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
@@ -21,13 +20,14 @@ def test_save_video(mock_cv2_writer: MagicMock) -> None:
 
     frames = [
         np.zeros((100, 100, 3), dtype=np.uint8),
-        np.zeros((100, 100, 3), dtype=np.uint8)
+        np.zeros((100, 100, 3), dtype=np.uint8),
     ]
 
     sink.save_video(iter(frames), "output.mp4", fps=30.0)
 
     # Writer initialization check
     import cv2
+
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore
     mock_cv2_writer.assert_called_once_with("output.mp4", fourcc, 30.0, (100, 100))
 
