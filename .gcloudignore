@@ -1,0 +1,14 @@
+.git
+.github
+.vscode
+.idea
+.DS_Store
+__pycache__
+*.pyc
+tests/
+docs/
+*.md
+scripts/
+gcp-sa-key.json
+.env
+.env.*
