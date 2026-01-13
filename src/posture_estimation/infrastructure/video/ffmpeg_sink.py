@@ -47,7 +47,9 @@ class FFmpegVideoSink(IVideoSink):
         """
         logger.debug(
             "Starting video save: output=%s, fps=%s, audio=%s",
-            output_path, fps, audio_path
+            output_path,
+            fps,
+            audio_path,
         )
         process: subprocess.Popen[bytes] | None = None
 
@@ -174,13 +176,11 @@ class FFmpegVideoSink(IVideoSink):
             output_args["acodec"] = "aac"
             output_args["shortest"] = None  # 映像・音声の短い方に合わせる
 
-        stream = ffmpeg.output(
-            *inputs,
-            output_path,
-            **output_args
-        ).overwrite_output()
+        stream = ffmpeg.output(*inputs, output_path, **output_args).overwrite_output()
 
         # ffmpeg-python の型定義が不完全なためキャスト
         from typing import cast
 
-        return cast(subprocess.Popen[bytes], stream.run_async(pipe_stdin=True, quiet=True))
+        return cast(
+            subprocess.Popen[bytes], stream.run_async(pipe_stdin=True, quiet=True)
+        )

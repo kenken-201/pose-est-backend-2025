@@ -61,7 +61,9 @@ def test_save_video_with_audio(
 ) -> None:
     """音声付きで保存する場合の引数を確認する (ffmpeg-python のモックが難しいので簡易検証)。"""
     sink = FFmpegVideoSink()
-    sink.save_video(iter(sample_frames_list), "output.mp4", 30.0, audio_path="audio.mp4")
+    sink.save_video(
+        iter(sample_frames_list), "output.mp4", 30.0, audio_path="audio.mp4"
+    )
 
     assert mock_subprocess.stdin.write.call_count == 2
 

@@ -164,9 +164,7 @@ def test_execute_normal_flow(
     mock_temp_manager.cleanup.assert_called_once_with("temp_output.mp4")
 
     # 5. Upload
-    mock_storage_service.upload.assert_called_once_with(
-        "temp_output.mp4", "output.mp4"
-    )
+    mock_storage_service.upload.assert_called_once_with("temp_output.mp4", "output.mp4")
 
     # 6. Result
     assert result.signed_url == "http://signed-url.com"

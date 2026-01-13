@@ -13,6 +13,7 @@ def mock_boto3() -> Generator[MagicMock, None, None]:
     with patch("boto3.client") as mock:
         yield mock
 
+
 def test_initialization(mock_boto3: MagicMock) -> None:
     """R2StorageService の初期化 (boto3 client 作成) を確認する。"""
     from unittest.mock import ANY
@@ -26,6 +27,7 @@ def test_initialization(mock_boto3: MagicMock) -> None:
         config=ANY,  # botocore.config.Config オブジェクト
     )
 
+
 def test_upload(mock_boto3: MagicMock) -> None:
     """Upload メソッドが正常にファイルをアップロードするか確認する。"""
     service = R2StorageService("url", "key", "secret", "bucket")
@@ -33,8 +35,11 @@ def test_upload(mock_boto3: MagicMock) -> None:
 
     key = service.upload("/local/file.mp4", "remote/file.mp4")
 
-    mock_client.upload_file.assert_called_once_with("/local/file.mp4", "bucket", "remote/file.mp4")
+    mock_client.upload_file.assert_called_once_with(
+        "/local/file.mp4", "bucket", "remote/file.mp4"
+    )
     assert key == "remote/file.mp4"
+
 
 def test_upload_failure(mock_boto3: MagicMock) -> None:
     """アップロード失敗時に StorageError を送出するか確認する。"""
@@ -49,6 +54,7 @@ def test_upload_failure(mock_boto3: MagicMock) -> None:
     with pytest.raises(StorageError, match="Upload failed"):
         service.upload("file", "key")
 
+
 def test_generate_signed_url(mock_boto3: MagicMock) -> None:
     """generate_signed_url が正常に署名付き URL を生成するか確認する。"""
     service = R2StorageService("url", "key", "secret", "bucket")
@@ -60,6 +66,6 @@ def test_generate_signed_url(mock_boto3: MagicMock) -> None:
     mock_client.generate_presigned_url.assert_called_once_with(
         "get_object",
         Params={"Bucket": "bucket", "Key": "remote/file.mp4"},
-        ExpiresIn=120
+        ExpiresIn=120,
     )
     assert url == "http://signed/url"

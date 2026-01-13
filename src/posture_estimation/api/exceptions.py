@@ -71,8 +71,7 @@ class VideoTooShortError(APIError):
     def __init__(self, duration: float) -> None:
         """初期化。"""
         message = (
-            f"Video too short: {duration:.1f}s "
-            f"(minimum: {MIN_VIDEO_DURATION_SEC}s)"
+            f"Video too short: {duration:.1f}s (minimum: {MIN_VIDEO_DURATION_SEC}s)"
         )
         super().__init__(400, AppErrorCode.VIDEO_TOO_SHORT, message)
 

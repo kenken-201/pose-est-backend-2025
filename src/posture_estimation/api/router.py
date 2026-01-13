@@ -77,55 +77,90 @@ def health_check() -> HealthResponse:
                     "examples": {
                         "VIDEO_TOO_SHORT": {
                             "summary": "動画が短すぎる",
-                            "value": {"error": {"code": "VIDEO_TOO_SHORT", "message": "Video duration 1.5s is too short (min: 3.0s)"}}
+                            "value": {
+                                "error": {
+                                    "code": "VIDEO_TOO_SHORT",
+                                    "message": "Video duration 1.5s is too short (min: 3.0s)",
+                                }
+                            },
                         },
                         "VIDEO_TOO_LONG": {
                             "summary": "動画が長すぎる",
-                            "value": {"error": {"code": "VIDEO_TOO_LONG", "message": "Video duration 500.0s is too long (max: 420.0s)"}}
+                            "value": {
+                                "error": {
+                                    "code": "VIDEO_TOO_LONG",
+                                    "message": "Video duration 500.0s is too long (max: 420.0s)",
+                                }
+                            },
                         },
                         "INVALID_VIDEO_FORMAT": {
                             "summary": "無効なフォーマット",
-                            "value": {"error": {"code": "INVALID_VIDEO_FORMAT", "message": "Unable to read video file"}}
-                        }
+                            "value": {
+                                "error": {
+                                    "code": "INVALID_VIDEO_FORMAT",
+                                    "message": "Unable to read video file",
+                                }
+                            },
+                        },
                     }
                 }
-            }
+            },
         },
         413: {
             "model": ErrorResponse,
             "description": "ファイルサイズ超過 (Max: 100MB)",
             "content": {
                 "application/json": {
-                    "example": {"error": {"code": "FILE_TOO_LARGE", "message": "File size 150MB exceeds limit of 100MB"}}
+                    "example": {
+                        "error": {
+                            "code": "FILE_TOO_LARGE",
+                            "message": "File size 150MB exceeds limit of 100MB",
+                        }
+                    }
                 }
-            }
+            },
         },
         422: {
             "model": ErrorResponse,
             "description": "パラメータ不正 (閾値範囲外など)",
             "content": {
                 "application/json": {
-                    "example": {"error": {"code": "INVALID_PARAMETER", "message": "Score threshold must be between 0.0 and 1.0"}}
+                    "example": {
+                        "error": {
+                            "code": "INVALID_PARAMETER",
+                            "message": "Score threshold must be between 0.0 and 1.0",
+                        }
+                    }
                 }
-            }
+            },
         },
         500: {
             "model": ErrorResponse,
             "description": "サーバー内部エラー (推論失敗など)",
             "content": {
                 "application/json": {
-                    "example": {"error": {"code": "MODEL_INFERENCE_ERROR", "message": "Failed to run pose estimation"}}
+                    "example": {
+                        "error": {
+                            "code": "MODEL_INFERENCE_ERROR",
+                            "message": "Failed to run pose estimation",
+                        }
+                    }
                 }
-            }
+            },
         },
         503: {
             "model": ErrorResponse,
             "description": "サービス利用不可 (ストレージエラーなど)",
             "content": {
                 "application/json": {
-                    "example": {"error": {"code": "STORAGE_SERVICE_UNAVAILABLE", "message": "Failed to upload processed video"}}
+                    "example": {
+                        "error": {
+                            "code": "STORAGE_SERVICE_UNAVAILABLE",
+                            "message": "Failed to upload processed video",
+                        }
+                    }
                 }
-            }
+            },
         },
     },
 )

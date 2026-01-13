@@ -41,16 +41,10 @@ def test_get_poses_for_frame() -> None:
     kp = Keypoint(
         name=KeypointName.NOSE, point=Point2D(0.5, 0.5), score=0.9
     )  # Dummy KP
-    pose_frame0_1 = Pose(
-        frame_index=0, keypoints=[kp], overall_score=0.9
-    )
-    pose_frame0_2 = Pose(
-        frame_index=0, keypoints=[kp], overall_score=0.8
-    )
+    pose_frame0_1 = Pose(frame_index=0, keypoints=[kp], overall_score=0.9)
+    pose_frame0_2 = Pose(frame_index=0, keypoints=[kp], overall_score=0.8)
     # フレーム1に1つのPose
-    pose_frame1_1 = Pose(
-        frame_index=1, keypoints=[kp], overall_score=0.95
-    )
+    pose_frame1_1 = Pose(frame_index=1, keypoints=[kp], overall_score=0.95)
 
     video.add_pose(pose_frame0_1)
     video.add_pose(pose_frame0_2)
