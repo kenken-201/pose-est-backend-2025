@@ -51,28 +51,35 @@ run_all() {
     run_coverage
 }
 
+print_success() {
+    echo -e "\n${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}  ✅ $1${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+}
+
 case "${1:-all}" in
     lint)
         run_lint
+        print_success "Lint check completed!"
         ;;
     type)
         run_type
+        print_success "Type check completed!"
         ;;
     test)
         run_test
+        print_success "Tests completed!"
         ;;
     cov)
         run_coverage
+        print_success "Coverage check completed!"
         ;;
     all)
         run_all
+        print_success "All checks completed successfully!"
         ;;
     *)
         echo "Usage: $0 {lint|type|test|cov|all}"
         exit 1
         ;;
 esac
-
-echo -e "\n${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}  ✅ All checks completed successfully!${NC}"
-echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"

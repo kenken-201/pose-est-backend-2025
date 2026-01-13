@@ -41,14 +41,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Poetry
-        run: pip install poetry==${{ env.POETRY_VERSION }}
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "poetry"
+
+      - name: Install Poetry
+        run: pip install poetry==${{ env.POETRY_VERSION }}
 
       - name: Install dependencies
         run: poetry install
