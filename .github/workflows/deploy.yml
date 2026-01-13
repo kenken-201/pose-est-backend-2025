@@ -131,7 +131,8 @@ jobs:
 
           gcloud builds submit . \
             --tag "${IMAGE_URI}" \
-            --timeout=15m
+            --timeout=15m \
+            --suppress-logs
 
       # Cloud Run へのデプロイ
       - name: Deploy to Cloud Run
