@@ -1,0 +1,225 @@
+openapi: 3.1.0
+info:
+  title: Pose Estimation Backend
+  description: TensorFlow MoveNet を使用した姿勢推定バックエンド API
+  version: 1.0.0
+paths:
+  /api/v1/health:
+    get:
+      tags:
+      - video
+      summary: ヘルスチェック
+      description: API の稼働状態を確認します。
+      operationId: health_check_api_v1_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/process:
+    post:
+      tags:
+      - video
+      summary: 動画処理
+      description: "アップロードされた動画に対して姿勢推定を行い、結果を返します。\n    \n    ## 制約事項\n    \n   \
+        \ - **動画時間**: 3.0秒以上、420.0秒 (7分) 以内\n    - **ファイルサイズ**: 100MB 以下\n    - **フォーマット**:\
+        \ 一般的な動画フォーマット (MP4, MOV, AVI 等)\n    - **音声**: 音声トラックが含まれる場合、出力動画にも保持されます"
+      operationId: process_video_api_v1_process_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_process_video_api_v1_process_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessVideoResponse'
+        '400':
+          description: 無効なリクエスト (動画時間外、フォーマット不正)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                VIDEO_TOO_SHORT:
+                  summary: 動画が短すぎる
+                  value:
+                    error:
+                      code: VIDEO_TOO_SHORT
+                      message: 'Video duration 1.5s is too short (min: 3.0s)'
+                VIDEO_TOO_LONG:
+                  summary: 動画が長すぎる
+                  value:
+                    error:
+                      code: VIDEO_TOO_LONG
+                      message: 'Video duration 500.0s is too long (max: 420.0s)'
+                INVALID_VIDEO_FORMAT:
+                  summary: 無効なフォーマット
+                  value:
+                    error:
+                      code: INVALID_VIDEO_FORMAT
+                      message: Unable to read video file
+        '413':
+          description: 'ファイルサイズ超過 (Max: 100MB)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: FILE_TOO_LARGE
+                  message: File size 150MB exceeds limit of 100MB
+        '422':
+          description: パラメータ不正 (閾値範囲外など)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: INVALID_PARAMETER
+                  message: Score threshold must be between 0.0 and 1.0
+        '500':
+          description: サーバー内部エラー (推論失敗など)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: MODEL_INFERENCE_ERROR
+                  message: Failed to run pose estimation
+        '503':
+          description: サービス利用不可 (ストレージエラーなど)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: STORAGE_SERVICE_UNAVAILABLE
+                  message: Failed to upload processed video
+components:
+  schemas:
+    Body_process_video_api_v1_process_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+          description: 処理対象の動画ファイル
+        score_threshold:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Score Threshold
+          description: 姿勢検出の閾値 (0.0-1.0)
+          default: 0.2
+      type: object
+      required:
+      - file
+      title: Body_process_video_api_v1_process_post
+    ErrorDetail:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: エラーコード
+        message:
+          type: string
+          title: Message
+          description: エラーメッセージ
+      type: object
+      required:
+      - code
+      - message
+      title: ErrorDetail
+      description: エラー詳細スキーマ。
+    ErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+          description: エラー詳細
+      type: object
+      required:
+      - error
+      title: ErrorResponse
+      description: エラーレスポンススキーマ。
+    HealthResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          description: ステータス (healthy)
+        version:
+          type: string
+          title: Version
+          description: API バージョン
+      type: object
+      required:
+      - status
+      - version
+      title: HealthResponse
+      description: ヘルスチェックのレスポンススキーマ。
+    ProcessVideoResponse:
+      properties:
+        signed_url:
+          type: string
+          title: Signed Url
+          description: 処理済み動画の署名付き URL
+        video_meta:
+          $ref: '#/components/schemas/VideoMetaResponse'
+          description: 動画メタデータ
+        total_poses:
+          type: integer
+          title: Total Poses
+          description: 検出された延べ姿勢数
+        processing_time_sec:
+          type: number
+          title: Processing Time Sec
+          description: 処理時間 (秒)
+      type: object
+      required:
+      - signed_url
+      - video_meta
+      - total_poses
+      - processing_time_sec
+      title: ProcessVideoResponse
+      description: 動画処理結果のレスポンススキーマ。
+    VideoMetaResponse:
+      properties:
+        width:
+          type: integer
+          title: Width
+          description: 動画の幅 (ピクセル)
+        height:
+          type: integer
+          title: Height
+          description: 動画の高さ (ピクセル)
+        fps:
+          type: number
+          title: Fps
+          description: フレームレート
+        duration_sec:
+          type: number
+          title: Duration Sec
+          description: 動画時間 (秒)
+        has_audio:
+          type: boolean
+          title: Has Audio
+          description: 音声トラックの有無
+      type: object
+      required:
+      - width
+      - height
+      - fps
+      - duration_sec
+      - has_audio
+      title: VideoMetaResponse
+      description: 動画メタデータのレスポンススキーマ。

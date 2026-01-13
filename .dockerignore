@@ -1,0 +1,36 @@
+__pycache__
+*.pyc
+*.log
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.*.yml
+docker-compose.yml
+tests/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+site/
+
+# Documentation & Guides
+docs/
+*.md
+LICENSE
+
+# Scripts
+*.sh
+export_openapi.py
+
+# Editor-specific files
+.vscode/
+.idea/

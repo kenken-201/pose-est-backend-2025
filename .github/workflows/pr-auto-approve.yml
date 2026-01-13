@@ -1,0 +1,30 @@
+name: Auto Approve
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  approve:
+    # ドラフトでないこと、かつPR作成者がリポジトリオーナーであることを確認
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login == github.repository_owner
+
+    runs-on: ubuntu-latest
+
+    # 権限を最小限に絞る (セキュリティ・ベストプラクティス)
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Approve Pull Request
+        # GitHub公式CLIを使用することで、外部Actionへの依存を排除
+        run: gh pr review "$PR_URL" --approve
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,153 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Target Environment"
+        required: true
+        default: "prod"
+        type: choice
+        options:
+          - prod
+
+env:
+  PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.7.1"
+  REGION: "asia-northeast1"
+
+  # Service Names
+  SERVICE_NAME_DEV: "pose-est-backend-dev"
+  SERVICE_NAME_PROD: "pose-est-backend-prod"
+
+  # Artifact Registry (Common for Dev/Prod in this phase)
+  REPO_NAME: "pose-est-backend-dev"
+  IMAGE_NAME: "pose-est-backend"
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Poetry
+        run: pip install poetry==${{ env.POETRY_VERSION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "poetry"
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run Quality Checks
+        run: ./scripts/check.sh
+
+  build-deploy:
+    name: Build & Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 環境ごとの変数・Secretsの設定
+      - name: Determine Environment
+        id: env
+        run: |
+          # Default to Dev
+          TARGET_ENV="dev"
+
+          # Branch-based Logic
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            TARGET_ENV="prod"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            TARGET_ENV="dev"
+          fi
+
+          # Manual Trigger Override
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+             TARGET_ENV="prod"
+          fi
+
+          if [[ "$TARGET_ENV" == "prod" ]]; then
+            echo "Target: Production"
+            echo "service_name=${{ env.SERVICE_NAME_PROD }}" >> $GITHUB_OUTPUT
+            
+            echo "cors_origins=${{ secrets.CORS_ORIGINS_PROD }}" >> $GITHUB_OUTPUT
+            echo "r2_access_key=${{ secrets.R2_ACCESS_KEY_PROD }}" >> $GITHUB_OUTPUT
+            echo "r2_secret_key=${{ secrets.R2_SECRET_KEY_PROD }}" >> $GITHUB_OUTPUT
+            echo "r2_bucket=${{ secrets.R2_BUCKET_NAME_PROD }}" >> $GITHUB_OUTPUT
+          else
+            echo "Target: Development"
+            echo "service_name=${{ env.SERVICE_NAME_DEV }}" >> $GITHUB_OUTPUT
+            
+            echo "cors_origins=${{ secrets.CORS_ORIGINS_DEV }}" >> $GITHUB_OUTPUT
+            echo "r2_access_key=${{ secrets.R2_ACCESS_KEY_DEV }}" >> $GITHUB_OUTPUT
+            echo "r2_secret_key=${{ secrets.R2_SECRET_KEY_DEV }}" >> $GITHUB_OUTPUT
+            echo "r2_bucket=${{ secrets.R2_BUCKET_NAME_DEV }}" >> $GITHUB_OUTPUT
+          fi
+
+      # Google Cloud 認証
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # Docker Build & Push (GitHub Actions Runner 上で実行)
+      # Cloud Build の権限エラーを回避し、シンプルに実行
+      - name: Build and Push Container
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${TAG}"
+          echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
+
+          docker build --platform linux/amd64 -t "${IMAGE_URI}" .
+          docker push "${IMAGE_URI}"
+
+      # Cloud Run へのデプロイ
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.env.outputs.service_name }}
+          image: ${{ env.IMAGE_URI }}
+          region: ${{ env.REGION }}
+          env_vars: |
+            ML_MODEL_URL=https://tfhub.dev/google/movenet/multipose/lightning/1
+            ML_SCORE_THRESHOLD=0.3
+            ML_TARGET_SIZE=256
+            CORS_ORIGINS=${{ steps.env.outputs.cors_origins }}
+            R2_ACCESS_KEY=${{ steps.env.outputs.r2_access_key }}
+            R2_SECRET_KEY=${{ steps.env.outputs.r2_secret_key }}
+            R2_ENDPOINT_URL=${{ secrets.R2_ENDPOINT_URL }}
+            R2_BUCKET_NAME=${{ steps.env.outputs.r2_bucket }}
+            MAX_UPLOAD_SIZE_MB=100
+            TF_CPP_MIN_LOG_LEVEL=2
+            CUDA_VISIBLE_DEVICES=-1
