@@ -218,8 +218,21 @@
 
 ### ⬜ タスク 7-3: CI/CD 統合準備
 
-- **Goal**: 自動デプロイに向けた準備
+- **Goal**: 自動デプロイに向けた準備 (GitHub Actions)
 - [ ] GitHub Actions ワークフロー (`.github/workflows/deploy.yml`) のドラフト作成
   - amd64 ネイティブビルド (ローカル M1 クロスビルドより高速)
-  - `push-backend-image.sh` のロジックをワークフローに移植
-- [ ] シークレット設定 (GCP_SA_KEY, ARTIFACT_REGISTRY_URL 等)
+  - `push-backend-image.sh` (または `gcloud builds submit`) のロジックを移植
+  - Dev/Prod の環境分岐の仕組みを構築
+- [ ] 環境変数の管理 (GitHub Secrets)
+  - `GCP_SA_KEY`
+  - `R2_ACCESS_KEY` 等
+
+### ⬜ タスク 7-4: 本番環境設定 & CORS 更新
+
+- **Goal**: 本番運用に向けたアクセスポリシーの適用
+- [ ] CORS 設定の環境分離 (Dev/Prod)
+  - 参照: `INFRA_HANDOVER.md.resolved`
+  - Dev: `https://dev.kenken-pose-est.online`
+  - Prod: `https://kenken-pose-est.online`
+  - `.env` または Secret Manager, GitHub Secrets の値を更新して適用
+- [ ] Prod 環境への初回デプロイ検証 (手動または CI 経由)
