@@ -216,16 +216,16 @@
     - [x] エラーコードの具体的な説明を追加 (`VIDEO_TOO_SHORT` 等)
     - [x] `export_openapi.py` 再実行と `docs/openapi.yaml` 更新
 
-### ⬜ タスク 7-3: CI/CD 統合準備
+### ✅ タスク 7-3: CI/CD 統合準備
 
 - **Goal**: 自動デプロイに向けた準備 (GitHub Actions)
-- [ ] GitHub Actions ワークフロー (`.github/workflows/deploy.yml`) のドラフト作成
+- [x] GitHub Actions ワークフロー (`.github/workflows/deploy.yml`) のドラフト作成
   - amd64 ネイティブビルド (ローカル M1 クロスビルドより高速)
   - `push-backend-image.sh` (または `gcloud builds submit`) のロジックを移植
   - Dev/Prod の環境分岐の仕組みを構築
-- [ ] 環境変数の管理 (GitHub Secrets)
+- [x] 環境変数の管理 (GitHub Secrets)
   - `GCP_SA_KEY`
-  - `R2_ACCESS_KEY` 等
+  - `R2_ACCESS_KEY` 等 (ワークフロー内で参照設定済み)
 
 ### ⬜ タスク 7-4: 本番環境設定 & CORS 更新
 
