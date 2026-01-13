@@ -2,11 +2,12 @@
 # scripts/check.sh - 品質チェックスクリプト
 #
 # Usage:
-#   ./scripts/check.sh        # 全チェック実行
-#   ./scripts/check.sh lint   # Lint のみ
-#   ./scripts/check.sh type   # Type Check のみ
-#   ./scripts/check.sh test   # Test のみ
-#   ./scripts/check.sh cov    # Coverage 付きテスト
+#   ./scripts/check.sh          # 全チェック実行
+#   ./scripts/check.sh lint     # Lint のみ
+#   ./scripts/check.sh format   # Format Check のみ
+#   ./scripts/check.sh type     # Type Check のみ
+#   ./scripts/check.sh test     # Test のみ
+#   ./scripts/check.sh cov      # Coverage 付きテスト
 
 set -e
 
@@ -25,6 +26,12 @@ run_lint() {
     print_header "🔍 Ruff (Lint)"
     poetry run ruff check .
     echo -e "${GREEN}✓ Lint passed${NC}"
+}
+
+run_format() {
+    print_header "🎨 Ruff (Format Check)"
+    poetry run ruff format --check .
+    echo -e "${GREEN}✓ Format check passed${NC}"
 }
 
 run_type() {
@@ -47,6 +54,7 @@ run_coverage() {
 
 run_all() {
     run_lint
+    run_format
     run_type
     run_coverage
 }
@@ -61,6 +69,10 @@ case "${1:-all}" in
     lint)
         run_lint
         print_success "Lint check completed!"
+        ;;
+    format)
+        run_format
+        print_success "Format check completed!"
         ;;
     type)
         run_type
@@ -79,7 +91,7 @@ case "${1:-all}" in
         print_success "All checks completed successfully!"
         ;;
     *)
-        echo "Usage: $0 {lint|type|test|cov|all}"
+        echo "Usage: $0 {lint|format|type|test|cov|all}"
         exit 1
         ;;
 esac
