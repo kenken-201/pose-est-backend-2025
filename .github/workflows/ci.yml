@@ -53,13 +53,13 @@ jobs:
 
       # 2. Static Type Check (Mypy)
       - name: Type check with Mypy
-        run: poetry run mypy app
+        run: poetry run mypy src/
 
       # 3. Unit Tests (Pytest)
       # 3.11.14の並列性能を活かし、カバレッジも測定
       - name: Run tests with Pytest
         run: |
-          poetry run pytest --cov=app --cov-report=xml
+          poetry run pytest --cov=src --cov-report=xml
 
       # カバレッジレポートのアップロード（任意）
       - name: Upload coverage to Codecov
