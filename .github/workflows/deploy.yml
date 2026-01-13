@@ -119,9 +119,9 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      # Cloud Build によるビルド & Push
-      # Note: リポジトリ外の cloudbuild.yaml に依存せず、--tag 指定でビルドする安全な構成
-      - name: Submit Build to Cloud Build
+      # Docker Build & Push (GitHub Actions Runner 上で実行)
+      # Cloud Build の権限エラーを回避し、シンプルに実行
+      - name: Build and Push Container
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           TAG: ${{ github.sha }}
@@ -129,10 +129,8 @@ jobs:
           IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${TAG}"
           echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
 
-          gcloud builds submit . \
-            --tag "${IMAGE_URI}" \
-            --timeout=15m \
-            --suppress-logs
+          docker build --platform linux/amd64 -t "${IMAGE_URI}" .
+          docker push "${IMAGE_URI}"
 
       # Cloud Run へのデプロイ
       - name: Deploy to Cloud Run
