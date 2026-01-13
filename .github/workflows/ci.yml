@@ -41,8 +41,7 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction
 
       # 1. Lint & Format Check (Ruff)
       # 最も高速なチェックを最初に実行し、失敗時は即座に終了（Fail-Fast）
