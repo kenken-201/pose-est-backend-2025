@@ -258,10 +258,28 @@
   - [x] Lint & Format 修正 (`main.py` の重複 import 削除など)
   - [x] 全体品質チェック (`check.sh`) パス (Coverage >90%)
 
-### ⬜ タスク 8-2: インフラ連携 (Terraform)
+### ✅ タスク 8-2: インフラ連携 (Terraform)
 
 - **Goal**: 共有シークレットの管理と環境変数注入
 - [x] **Terraform 修正** (`pose-est-infra` 側で実施)
   - [x] `backend_access_token` の Secret Manager リソース定義追加
   - [x] Cloud Run への環境変数 `CLOUDFLARE_ACCESS_TOKEN` 注入設定
-- [ ] `terraform apply` 実行とデプロイ (ユーザー作業)
+- [x] `terraform apply` 実行とデプロイ (ユーザー作業)
+
+### ⬜ タスク 8-3: 署名付き URL と音声処理の修正
+
+- **Goal**: 処理済み動画の再生と音声保持の問題を解決する。
+- **参照**: `docs/handover-20260116.md`
+
+#### 🔴 Issue 1: 署名付き URL が SigV2 で生成されている
+
+- **現象**: 処理完了後、フロントエンドで結果動画を再生すると 401 Unauthorized
+- **原因**: boto3 が SigV2 で署名しているが、Cloudflare R2 は **SigV4 のみ対応**
+- [ ] **修正**: `r2_service.py` の `Config` に `signature_version='s3v4'` を追加
+
+#### 🟡 Issue 2: 処理後の動画から音声が消えている
+
+- **現象**: R2 に保存された処理済み動画は映像のみで音声が無音
+- **原因**: `opencv_source.py` の `has_audio` が常に `False` にハードコードされている
+  - `use_cases.py` で `audio_path` が `None` になり、FFmpeg が音声結合をスキップ
+- [ ] **修正**: `ffprobe` を使用して音声トラックの有無を正確に検出するロジックを追加
