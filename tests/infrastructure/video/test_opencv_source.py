@@ -61,6 +61,25 @@ def test_get_meta_with_audio(
     source = OpenCVVideoSource("test.mp4")
     meta = source.get_meta()
 
+    mock_subprocess_run.assert_called_with(
+        [
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_streams",
+            "-select_streams",
+            "a",
+            "-show_entries",
+            "stream=codec_type",
+            "test.mp4",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
     assert meta.width == 1280
     assert meta.height == 720
     assert meta.fps == 30.0
@@ -97,6 +116,25 @@ def test_get_meta_without_audio(
 
     source = OpenCVVideoSource("test.mp4")
     meta = source.get_meta()
+
+    mock_subprocess_run.assert_called_with(
+        [
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_streams",
+            "-select_streams",
+            "a",
+            "-show_entries",
+            "stream=codec_type",
+            "test.mp4",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
 
     assert meta.has_audio is False
 

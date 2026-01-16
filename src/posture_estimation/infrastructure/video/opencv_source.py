@@ -130,6 +130,8 @@ class OpenCVVideoSource(IVideoSource):
                     "-show_streams",
                     "-select_streams",
                     "a",
+                    "-show_entries",  # 必要な「コーデック情報」のみを取得
+                    "stream=codec_type",  # これにより JSON デコードとメモリ使用量が最小限に抑えられる
                     self.video_path,
                 ],
                 capture_output=True,
