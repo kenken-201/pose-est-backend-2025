@@ -3,9 +3,13 @@
 特徴:
 - Context Manager サポート (自動リソース解放)
 - 詳細なメタデータ取得
+- ffprobe による音声トラック検出
 - RGB 形式でのフレーム出力
 """
 
+import json
+import logging
+import subprocess
 from collections.abc import Iterator
 from types import TracebackType
 from typing import ClassVar, Self
@@ -17,6 +21,8 @@ from numpy.typing import NDArray
 from posture_estimation.domain.exceptions import VideoProcessingError
 from posture_estimation.domain.interfaces import IVideoSource
 from posture_estimation.domain.values import VideoMeta
+
+logger = logging.getLogger(__name__)
 
 
 class OpenCVVideoSource(IVideoSource):
@@ -95,8 +101,8 @@ class OpenCVVideoSource(IVideoSource):
 
         duration_sec = total_frames / fps if total_frames > 0 and fps > 0 else 0.0
 
-        # OpenCV 単体では音声の有無を正確に判定するのは難しいため False とする
-        has_audio = False
+        # ffprobe を使用して音声トラックの有無を検出
+        has_audio = self._detect_audio()
 
         return VideoMeta(
             width=width,
@@ -106,6 +112,63 @@ class OpenCVVideoSource(IVideoSource):
             duration_sec=duration_sec,
             has_audio=has_audio,
         )
+
+    def _detect_audio(self) -> bool:
+        """FFprobe を使用して音声トラックの有無を検出します。
+
+        Returns:
+            bool: 音声トラックが存在する場合 True
+        """
+        try:
+            result = subprocess.run(  # noqa: S603
+                [  # noqa: S607
+                    "ffprobe",
+                    "-v",
+                    "quiet",
+                    "-print_format",
+                    "json",
+                    "-show_streams",
+                    "-select_streams",
+                    "a",
+                    "-show_entries",  # 必要な「コーデック情報」のみを取得
+                    "stream=codec_type",  # これにより JSON デコードとメモリ使用量が最小限に抑えられる
+                    self.video_path,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+
+            if result.returncode != 0:
+                logger.warning(
+                    "ffprobe failed for %s, assuming no audio", self.video_path
+                )
+                return False
+
+            data = json.loads(result.stdout)
+            streams = data.get("streams", [])
+            has_audio = len(streams) > 0
+
+            logger.debug(
+                "Audio detection for %s: %s (streams: %d)",
+                self.video_path,
+                has_audio,
+                len(streams),
+            )
+            return has_audio
+
+        except FileNotFoundError:
+            logger.warning("ffprobe not found, assuming no audio")
+            return False
+        except subprocess.TimeoutExpired:
+            logger.warning("ffprobe timed out for %s", self.video_path)
+            return False
+        except json.JSONDecodeError:
+            logger.warning("Failed to parse ffprobe output for %s", self.video_path)
+            return False
+        except Exception as e:
+            logger.warning("Audio detection failed for %s: %s", self.video_path, e)
+            return False
 
     def read_frames(self) -> Iterator[tuple[int, NDArray[np.uint8]]]:
         """動画フレームを順次読み込みます。

@@ -51,7 +51,9 @@ class R2StorageService(IStorageService):
         self.bucket_name = bucket_name
         try:
             # リトライとタイムアウトの設定
+            # Note: Cloudflare R2 は SigV4 のみ対応のため明示的に指定
             config = Config(
+                signature_version="s3v4",
                 retries={
                     "max_attempts": max_attempts,
                     "mode": "adaptive",  # 自動指数バックオフ

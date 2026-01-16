@@ -25,8 +25,7 @@ env:
   SERVICE_NAME_DEV: "pose-est-backend-dev"
   SERVICE_NAME_PROD: "pose-est-backend-prod"
 
-  # Artifact Registry (Common for Dev/Prod in this phase)
-  REPO_NAME: "pose-est-backend-dev"
+  # Artifact Registry
   IMAGE_NAME: "pose-est-backend"
 
 jobs:
@@ -93,18 +92,14 @@ jobs:
           if [[ "$TARGET_ENV" == "prod" ]]; then
             echo "Target: Production"
             echo "service_name=${{ env.SERVICE_NAME_PROD }}" >> $GITHUB_OUTPUT
-            
+            echo "repo_name=pose-est-backend-prod" >> $GITHUB_OUTPUT
             echo "cors_origins=${{ secrets.CORS_ORIGINS_PROD }}" >> $GITHUB_OUTPUT
-            echo "r2_access_key=${{ secrets.R2_ACCESS_KEY_PROD }}" >> $GITHUB_OUTPUT
-            echo "r2_secret_key=${{ secrets.R2_SECRET_KEY_PROD }}" >> $GITHUB_OUTPUT
             echo "r2_bucket=${{ secrets.R2_BUCKET_NAME_PROD }}" >> $GITHUB_OUTPUT
           else
             echo "Target: Development"
             echo "service_name=${{ env.SERVICE_NAME_DEV }}" >> $GITHUB_OUTPUT
-            
+            echo "repo_name=pose-est-backend-dev" >> $GITHUB_OUTPUT
             echo "cors_origins=${{ secrets.CORS_ORIGINS_DEV }}" >> $GITHUB_OUTPUT
-            echo "r2_access_key=${{ secrets.R2_ACCESS_KEY_DEV }}" >> $GITHUB_OUTPUT
-            echo "r2_secret_key=${{ secrets.R2_SECRET_KEY_DEV }}" >> $GITHUB_OUTPUT
             echo "r2_bucket=${{ secrets.R2_BUCKET_NAME_DEV }}" >> $GITHUB_OUTPUT
           fi
 
@@ -126,13 +121,14 @@ jobs:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           TAG: ${{ github.sha }}
         run: |
-          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${TAG}"
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${{ steps.env.outputs.repo_name }}/${IMAGE_NAME}:${TAG}"
           echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
 
           docker build --platform linux/amd64 -t "${IMAGE_URI}" .
           docker push "${IMAGE_URI}"
 
       # Cloud Run へのデプロイ
+      # Note: R2_ACCESS_KEY, R2_SECRET_KEY は Terraform (Secret Manager) で管理
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
@@ -144,8 +140,6 @@ jobs:
             ML_SCORE_THRESHOLD=0.3
             ML_TARGET_SIZE=256
             CORS_ORIGINS=${{ steps.env.outputs.cors_origins }}
-            R2_ACCESS_KEY=${{ steps.env.outputs.r2_access_key }}
-            R2_SECRET_KEY=${{ steps.env.outputs.r2_secret_key }}
             R2_ENDPOINT_URL=${{ secrets.R2_ENDPOINT_URL }}
             R2_BUCKET_NAME=${{ steps.env.outputs.r2_bucket }}
             MAX_UPLOAD_SIZE_MB=100
