@@ -236,4 +236,51 @@
 - [x] CORS 設定の環境分離 (Dev/Prod)
   - 参照: `INFRA_HANDOVER.md.resolved`
   - GitHub Secrets への設定 (完了済みを確認)
+- [x] **CI/CD トラブルシューティング & 修正** (追加対応)
+  - Cloud Build 権限エラー (Log Streaming) の根本対策として **Docker Build (GitHub Actions Runner)** に切り替え
 - [ ] Prod 環境への初回デプロイ検証 (CI 経由: ユーザー作業)
+
+---
+
+## 🛡️ フェーズ 8: セキュリティ強化と本番適合 (Production Readiness)
+
+### ✅ タスク 8-1: アクセス制御の実装 (Cloudflare Access Integration)
+
+- **Goal**: バックエンド (`*.run.app`) への直接アクセスを遮断し、Cloudflare 経由のトラフィックのみを許可する。
+- [x] **バックエンド実装 (`middleware.py`)**
+  - [x] `CloudflareAuthMiddleware` 追加: `X-CF-Access-Token` ヘッダー検証
+  - [x] Preflight Request (`OPTIONS`) と `/health` の除外設定
+  - [x] **セキュリティ強化**:
+    - `secrets.compare_digest` によるタイミング攻撃対策
+    - 環境変数のキャッシングによるパフォーマンス最適化
+- [x] **品質保証 (Quality Assurance)**
+  - [x] 単体テスト追加 (`tests/api/test_middleware.py`): カバレッジ 100% 達成
+  - [x] Lint & Format 修正 (`main.py` の重複 import 削除など)
+  - [x] 全体品質チェック (`check.sh`) パス (Coverage >90%)
+
+### ✅ タスク 8-2: インフラ連携 (Terraform)
+
+- **Goal**: 共有シークレットの管理と環境変数注入
+- [x] **Terraform 修正** (`pose-est-infra` 側で実施)
+  - [x] `backend_access_token` の Secret Manager リソース定義追加
+  - [x] Cloud Run への環境変数 `CLOUDFLARE_ACCESS_TOKEN` 注入設定
+- [x] `terraform apply` 実行とデプロイ (ユーザー作業)
+
+### ✅ タスク 8-3: 署名付き URL と音声処理の修正
+
+- **Goal**: 処理済み動画の再生と音声保持の問題を解決する。
+- **参照**: `docs/handover-20260116.md`
+
+#### 🔴 Issue 1: 署名付き URL が SigV2 で生成されている
+
+- **現象**: 処理完了後、フロントエンドで結果動画を再生すると 401 Unauthorized
+- **原因**: boto3 が SigV2 で署名しているが、Cloudflare R2 は **SigV4 のみ対応**
+- [x] **修正**: `r2_service.py` の `Config` に `signature_version='s3v4'` を追加
+
+#### 🟡 Issue 2: 処理後の動画から音声が消えている
+
+- **現象**: R2 に保存された処理済み動画は映像のみで音声が無音
+- **原因**: `opencv_source.py` の `has_audio` が常に `False` にハードコードされている
+  - `use_cases.py` で `audio_path` が `None` になり、FFmpeg が音声結合をスキップ
+- [x] **修正**: `ffprobe` を使用して音声トラックの有無を正確に検出するロジックを追加
+- [x] **品質確認**: 全チェック合格 (Coverage 90.29%)

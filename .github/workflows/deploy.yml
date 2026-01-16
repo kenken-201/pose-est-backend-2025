@@ -25,8 +25,7 @@ env:
   SERVICE_NAME_DEV: "pose-est-backend-dev"
   SERVICE_NAME_PROD: "pose-est-backend-prod"
 
-  # Artifact Registry (Common for Dev/Prod in this phase)
-  REPO_NAME: "pose-est-backend-dev"
+  # Artifact Registry
   IMAGE_NAME: "pose-est-backend"
 
 jobs:
@@ -93,6 +92,7 @@ jobs:
           if [[ "$TARGET_ENV" == "prod" ]]; then
             echo "Target: Production"
             echo "service_name=${{ env.SERVICE_NAME_PROD }}" >> $GITHUB_OUTPUT
+            echo "repo_name=pose-est-backend-prod" >> $GITHUB_OUTPUT
             
             echo "cors_origins=${{ secrets.CORS_ORIGINS_PROD }}" >> $GITHUB_OUTPUT
             echo "r2_access_key=${{ secrets.R2_ACCESS_KEY_PROD }}" >> $GITHUB_OUTPUT
@@ -101,6 +101,7 @@ jobs:
           else
             echo "Target: Development"
             echo "service_name=${{ env.SERVICE_NAME_DEV }}" >> $GITHUB_OUTPUT
+            echo "repo_name=pose-est-backend-dev" >> $GITHUB_OUTPUT
             
             echo "cors_origins=${{ secrets.CORS_ORIGINS_DEV }}" >> $GITHUB_OUTPUT
             echo "r2_access_key=${{ secrets.R2_ACCESS_KEY_DEV }}" >> $GITHUB_OUTPUT
@@ -126,7 +127,7 @@ jobs:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           TAG: ${{ github.sha }}
         run: |
-          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${TAG}"
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${{ steps.env.outputs.repo_name }}/${IMAGE_NAME}:${TAG}"
           echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
 
           docker build --platform linux/amd64 -t "${IMAGE_URI}" .

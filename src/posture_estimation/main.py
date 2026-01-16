@@ -8,7 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from posture_estimation.api.exceptions import register_exception_handlers
-from posture_estimation.api.middleware import RequestLoggingMiddleware
+from posture_estimation.api.middleware import (
+    CloudflareAuthMiddleware,
+    RequestLoggingMiddleware,
+)
 from posture_estimation.api.router import router as api_router
 
 logger = logging.getLogger(__name__)
@@ -41,7 +44,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS ミドルウェア
+# ログミドルウェア (一番外側: 最後に実行、最初に戻る)
+app.add_middleware(RequestLoggingMiddleware)
+
+# CORS ミドルウェア (2番目)
 origins = _get_cors_origins()
 is_wildcard = origins == ["*"]
 
@@ -59,8 +65,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ログミドルウェア
-app.add_middleware(RequestLoggingMiddleware)
+# 認証ミドルウェア (3番目: CORS の後、アプリの前)
+app.add_middleware(CloudflareAuthMiddleware)
 
 # ルーター登録
 app.include_router(api_router)
