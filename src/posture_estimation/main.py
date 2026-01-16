@@ -8,12 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from posture_estimation.api.exceptions import register_exception_handlers
-from posture_estimation.api.exceptions import register_exception_handlers
 from posture_estimation.api.middleware import (
     CloudflareAuthMiddleware,
     RequestLoggingMiddleware,
 )
-from posture_estimation.api.router import router as api_router
 from posture_estimation.api.router import router as api_router
 
 logger = logging.getLogger(__name__)
