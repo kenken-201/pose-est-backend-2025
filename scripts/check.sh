@@ -24,31 +24,31 @@ print_header() {
 
 run_lint() {
     print_header "🔍 Ruff (Lint)"
-    poetry run ruff check .
+    uv run ruff check .
     echo -e "${GREEN}✓ Lint passed${NC}"
 }
 
 run_format() {
     print_header "🎨 Ruff (Format Check)"
-    poetry run ruff format --check .
+    uv run ruff format --check .
     echo -e "${GREEN}✓ Format check passed${NC}"
 }
 
 run_type() {
     print_header "📝 Mypy (Type Check)"
-    poetry run mypy src/
+    uv run mypy src/
     echo -e "${GREEN}✓ Type check passed${NC}"
 }
 
 run_test() {
     print_header "🧪 Pytest"
-    poetry run pytest -q
+    uv run pytest -q
     echo -e "${GREEN}✓ Tests passed${NC}"
 }
 
 run_coverage() {
     print_header "📊 Coverage"
-    poetry run pytest --cov=src --cov-report=term-missing --cov-fail-under=90 -q
+    uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=90 -q
     echo -e "${GREEN}✓ Coverage check passed (≥90%)${NC}"
 }
 

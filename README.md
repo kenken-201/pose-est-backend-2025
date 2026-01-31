@@ -82,7 +82,7 @@ MoveNet の推論速度と精度を最大化するために、以下の最適化
 
 - Docker & Docker Compose (または Colima)
 - Python 3.11+ (ローカル開発時)
-- Poetry
+- uv (Python パッケージマネージャー)
 
 ### Docker での実行 (推奨)
 
@@ -103,11 +103,14 @@ API は `http://localhost:8080` で利用可能です。
 ### ローカル開発環境のセットアップ
 
 ```bash
+# uv のインストール (未インストールの場合)
+brew install uv
+
 # 依存関係のインストール
-poetry install
+uv sync
 
 # 開発サーバー起動
-poetry run uvicorn posture_estimation.main:app --reload
+uv run uvicorn posture_estimation.main:app --reload
 ```
 
 ## API ドキュメント
@@ -135,8 +138,8 @@ API の詳細な仕様は以下で確認できます。
 
 ```bash
 # 全テスト実行
-poetry run pytest
+uv run pytest
 
 # カバレッジレポート
-poetry run pytest --cov=posture_estimation
+uv run pytest --cov=posture_estimation
 ```

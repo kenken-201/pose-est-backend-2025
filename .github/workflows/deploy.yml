@@ -41,17 +41,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Poetry
-        run: pip install poetry==${{ env.POETRY_VERSION }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.26"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: "poetry"
 
       - name: Install dependencies
-        run: poetry install
+        run: uv sync
 
       - name: Run Quality Checks
         run: ./scripts/check.sh

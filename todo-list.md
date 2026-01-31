@@ -285,6 +285,26 @@
 - [x] **修正**: `ffprobe` を使用して音声トラックの有無を正確に検出するロジックを追加
 - [x] **品質確認**: 全チェック合格 (Coverage 90.29%)
 
+### ⬜ タスク 8-4: Poetry → uv 移行 (CI/CD 高速化)
+
+- **Goal**: パッケージマネージャーを Poetry から uv に移行し、CI/CD とローカル開発を高速化する。
+- **期待効果**: 依存解決・インストール時間を 5-20 倍高速化、GitHub Actions 無料枠の節約
+- [x] **8-4a**: `pyproject.toml` の互換性確認
+  - [x] PEP 621 準拠の確認 (uv はそのまま読み込み可能)
+  - [x] Poetry 固有設定の移行 (`[tool.poetry.scripts]` → `[project.scripts]`)
+- [x] **8-4b**: ロックファイルの移行
+  - [x] `uv lock` で `uv.lock` を生成
+  - [x] `poetry.lock` を削除
+- [x] **8-4c**: CI ワークフローの更新
+  - [x] `.github/workflows/ci.yml`: `poetry install` → `uv sync`
+  - [x] `.github/workflows/deploy.yml`: `poetry install` → `uv sync`
+- [x] **8-4d**: Dockerfile の更新
+  - [x] `poetry export` → `uv export` に変更
+  - [x] または `uv sync --frozen` を使用
+- [x] **8-4e**: ドキュメント更新
+  - [x] `README.md` のセットアップ手順を uv に更新
+- [x] **🛑 [Review] ローカル・CI 動作確認**
+
 ---
 
 ## 🚀 フェーズ 9: 署名付き URL アップロード対応 (大容量ファイル対応)
