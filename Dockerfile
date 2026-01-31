@@ -3,17 +3,14 @@ FROM python:3.11-slim as builder
 
 WORKDIR /app
 
-# Poetry のインストール
-# --mount=type=cache: ホスト上の pip キャッシュを利用して再ビルドを高速化
-# --no-cache-dir: 最終イメージレイヤーにキャッシュを含めない
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-cache-dir poetry==1.7.1
+# uv のインストール
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # 設定ファイルのコピー
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml uv.lock ./
 
 # 依存関係を requirements.txt にエクスポート
-RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+RUN uv export --frozen --no-emit-workspace --output-file requirements.txt
 
 # Runtime Stage
 FROM python:3.11-slim as runtime
