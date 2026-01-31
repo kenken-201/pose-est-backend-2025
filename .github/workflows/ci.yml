@@ -3,8 +3,16 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - ".github/workflows/**"
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - ".github/workflows/**"
 
 # 実行権限を最小限に制限（セキュリティのベストプラクティス）
 permissions:
