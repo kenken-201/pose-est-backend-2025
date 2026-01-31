@@ -2,14 +2,14 @@
 
 AI による姿勢推定アプリケーションのバックエンド API です。ユーザーがアップロードした動画を解析し、骨格検知結果を描画して返します。
 
-## 🚀 機能
+## 機能
 
 - **動画アップロード**: `.mp4`, `.mov`, `.avi` 形式に対応
 - **姿勢推定**: TensorFlow Hub の MoveNet (Lightning) モデルを使用
 - **動画生成**: 推定された骨格を動画にオーバーレイ描画
 - **クラウドストレージ**: 処理結果を Cloudflare R2 に保存し、署名付き URL を発行
 
-## 🛠 技術スタック
+## 技術スタック
 
 | カテゴリ         | 技術                     | 解説・選定理由                                              |
 | :--------------- | :----------------------- | :---------------------------------------------------------- |
@@ -20,12 +20,12 @@ AI による姿勢推定アプリケーションのバックエンド API です
 | **Architecture** | **Clean Architecture**   | 依存性の方向を一方向に保ち、テスト容易性を担保              |
 | **Quality**      | **Ruff / Mypy / Pytest** | 厳格な静的解析と高いテストカバレッジ基準                    |
 
-## 🏗 アーキテクチャ設計
+## アーキテクチャ設計
 
 本プロジェクトは **Clean Architecture** (Layered Architecture) を採用し、技術的詳細（フレームワークや DB）からビジネスロジックを分離しています。
 
 <details>
-<summary><strong>📐 レイヤードアーキテクチャとディレクトリ構造</strong></summary>
+<summary><strong>レイヤードアーキテクチャとディレクトリ構造</strong></summary>
 
 ### 4層構造
 
@@ -54,7 +54,7 @@ src/
 </details>
 
 <details>
-<summary><strong>⚡️ 技術的こだわりと最適化 (ML & Performance)</strong></summary>
+<summary><strong>技術的こだわりと最適化 (ML & Performance)</strong></summary>
 
 ### ML 推論最適化
 
@@ -70,13 +70,13 @@ MoveNet の推論速度と精度を最大化するために、以下の最適化
 
 | パターン            | 実装例                     | 利点                                                                    |
 | :------------------ | :------------------------- | :---------------------------------------------------------------------- |
-| **Stdin Pipe**      | `FFmpegVideoSink`          | 中間ファイルを生成せずパイプ渡しすることでディスク I/O を削減           |
+| **Stdin Pipe**      | `FFmpegVideoSink`          | 中間ファイルを生成せずパイプ渡しを行うことでディスク I/O を削減         |
 | **Factory Pattern** | `IVideoSourceFactory`      | 動画ソースの生成ロジックを抽象化し、DI (依存性注入) を容易に            |
 | **Context Manager** | `with VideoProcessor(...)` | Python の `with` 構文でリソース（メモリ、ファイルハンドル）を確実に解放 |
 
 </details>
 
-## 📦 セットアップ
+## セットアップ
 
 ### 必要要件
 
@@ -110,15 +110,15 @@ poetry install
 poetry run uvicorn posture_estimation.main:app --reload
 ```
 
-## � API ドキュメント
+## API ドキュメント
 
 API の詳細な仕様は以下で確認できます。
 
-- **静的 HTML**: [docs/index.html](docs/index.html) (ブラウザで直接開けます)
+- **静的 HTML**: [docs/index.html](docs/index.html)
 - **OpenAPI 定義**: [docs/openapi.yaml](docs/openapi.yaml)
 - **開発時 (Swagger UI)**: サーバー起動中に `http://localhost:8080/docs` へアクセス
 
-## �🔑 環境変数
+## 環境変数
 
 | 変数名               | 説明                   | デフォルト値       |
 | -------------------- | ---------------------- | ------------------ |
@@ -131,7 +131,7 @@ API の詳細な仕様は以下で確認できます。
 | `CORS_ORIGINS`       | CORS 許可オリジン      | \*                 |
 | `MAX_UPLOAD_SIZE_MB` | アップロード最大サイズ | 100                |
 
-## 🧪 テスト
+## テスト
 
 ```bash
 # 全テスト実行
