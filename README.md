@@ -11,12 +11,70 @@ AI による姿勢推定アプリケーションのバックエンド API です
 
 ## 🛠 技術スタック
 
-- **言語**: Python 3.11
-- **フレームワーク**: FastAPI
-- **ML ライブラリ**: TensorFlow, TensorFlow Hub
-- **画像処理**: OpenCV, ffmpeg-python
-- **インフラ**: Cloud Run (予定), Cloudflare R2
-- **開発ツール**: Poetry, Docker, Ruff, Mypy, Pytest
+| カテゴリ         | 技術                     | 解説・選定理由                                              |
+| :--------------- | :----------------------- | :---------------------------------------------------------- |
+| **Language**     | **Python 3.11**          | 型ヒント機能をフル活用し、堅牢なコードベースを構築          |
+| **Framework**    | **FastAPI**              | 非同期処理に強く、型安全なモダン Web フレームワーク         |
+| **ML Core**      | **TensorFlow / MoveNet** | 軽量かつ高精度な Lightning モデルを採用 (Multi-person 対応) |
+| **Image Proc**   | **OpenCV / FFmpeg**      | 効率的なフレーム処理と音声結合                              |
+| **Architecture** | **Clean Architecture**   | 依存性の方向を一方向に保ち、テスト容易性を担保              |
+| **Quality**      | **Ruff / Mypy / Pytest** | 厳格な静的解析と高いテストカバレッジ基準                    |
+
+## 🏗 アーキテクチャ設計
+
+本プロジェクトは **Clean Architecture** (Layered Architecture) を採用し、技術的詳細（フレームワークや DB）からビジネスロジックを分離しています。
+
+<details>
+<summary><strong>📐 レイヤードアーキテクチャとディレクトリ構造</strong></summary>
+
+### 4層構造
+
+1.  **Domain Layer (`src/posture_estimation/domain`)**
+    - ビジネスロジックの中核。外部ライブラリ（TensorFlow, FastAPI 等）に依存しない純粋な Python クラスとインターフェースのみで構成。
+2.  **Application Layer (`src/posture_estimation/application`)**
+    - ユースケースの実装。ドメインオブジェクトを操作し、具体的な業務フローを実現します。
+3.  **Interface Layer (`src/posture_estimation/api`)**
+    - REST API コントローラー。HTTP リクエストをユースケースへの入力に変換します。
+4.  **Infrastructure Layer (`src/posture_estimation/infrastructure`)**
+    - 詳細実装（TensorFlow, OpenCV, Cloudflare R2）。ドメイン層で定義されたインターフェースを実装します。
+
+### ディレクトリ構造
+
+```text
+src/
+├── posture_estimation/
+│   ├── domain/           # 1. Domain (Entities, Value Objects, Interfaces)
+│   ├── application/      # 2. Application (Use Cases, Services)
+│   ├── api/              # 3. Interface (Routes, Dependencies, Schema)
+│   ├── infrastructure/   # 4. Infrastructure (Repositories, ML Impl, Storage)
+│   ├── core/             # Shared Kernel (Config, Logging, Exceptions)
+│   └── main.py           # Entry Point
+```
+
+</details>
+
+<details>
+<summary><strong>⚡️ 技術的こだわりと最適化 (ML & Performance)</strong></summary>
+
+### ML 推論最適化
+
+MoveNet の推論速度と精度を最大化するために、以下の最適化を行っています。
+
+| 最適化項目       | 実装詳細                                        | 効果                                             |
+| :--------------- | :---------------------------------------------- | :----------------------------------------------- |
+| **Graph Mode**   | `@tf.function(reduce_retracing=True)`           | 推論オーバーヘッドを削減し、速度を 2-10倍 向上   |
+| **Warm-up**      | 起動時にダミーデータで推論を実行                | 初回リクエスト時のモデルロード遅延（数秒）を解消 |
+| **Letterboxing** | アスペクト比を維持したままリサイズ + パディング | 画像の歪みを防ぎ、推論精度を向上                 |
+
+### インフラ層設計パターン
+
+| パターン            | 実装例                     | 利点                                                                    |
+| :------------------ | :------------------------- | :---------------------------------------------------------------------- |
+| **Stdin Pipe**      | `FFmpegVideoSink`          | 中間ファイルを生成せずパイプ渡しすることでディスク I/O を削減           |
+| **Factory Pattern** | `IVideoSourceFactory`      | 動画ソースの生成ロジックを抽象化し、DI (依存性注入) を容易に            |
+| **Context Manager** | `with VideoProcessor(...)` | Python の `with` 構文でリソース（メモリ、ファイルハンドル）を確実に解放 |
+
+</details>
 
 ## 📦 セットアップ
 
@@ -81,16 +139,4 @@ poetry run pytest
 
 # カバレッジレポート
 poetry run pytest --cov=posture_estimation
-```
-
-## 📁 ディレクトリ構造
-
-```
-src/posture_estimation/
-├── api/            # Web API (Router, Schema, Dependencies)
-├── application/    # アプリケーション層 (Use Cases, DTOs)
-├── domain/         # ドメイン層 (Entities, Interfaces)
-├── infrastructure/ # インフラ層 (ML, Storage, Video)
-├── core/           # 共通設定 (DI Container)
-└── main.py         # エントリーポイント
 ```
