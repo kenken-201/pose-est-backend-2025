@@ -284,3 +284,76 @@
   - `use_cases.py` で `audio_path` が `None` になり、FFmpeg が音声結合をスキップ
 - [x] **修正**: `ffprobe` を使用して音声トラックの有無を正確に検出するロジックを追加
 - [x] **品質確認**: 全チェック合格 (Coverage 90.29%)
+
+### ✅ タスク 8-4: Poetry → uv 移行 (CI/CD 高速化)
+
+- **Goal**: パッケージマネージャーを Poetry から uv に移行し、CI/CD とローカル開発を高速化する。
+- **期待効果**: 依存解決・インストール時間を 5-20 倍高速化、GitHub Actions 無料枠の節約
+- [x] **8-4a**: `pyproject.toml` の互換性確認
+  - [x] PEP 621 準拠の確認 (uv はそのまま読み込み可能)
+  - [x] Poetry 固有設定の移行 (`[tool.poetry.scripts]` → `[project.scripts]`)
+- [x] **8-4b**: ロックファイルの移行
+  - [x] `uv lock` で `uv.lock` を生成
+  - [x] `poetry.lock` を削除
+- [x] **8-4c**: CI ワークフローの更新
+  - [x] `.github/workflows/ci.yml`: `poetry install` → `uv sync`
+  - [x] `.github/workflows/deploy.yml`: `poetry install` → `uv sync`
+- [x] **8-4d**: Dockerfile の更新
+  - [x] `poetry export` → `uv export` に変更
+  - [x] または `uv sync --frozen` を使用
+- [x] **8-4e**: ドキュメント更新
+  - [x] `README.md` のセットアップ手順を uv に更新
+- [x] **🛑 [Review] ローカル・CI 動作確認**
+
+---
+
+## 🚀 フェーズ 9: 署名付き URL アップロード対応 (大容量ファイル対応)
+
+**Goal**: Cloud Run の 32MB 制限を回避するため、クライアントから R2 への直接アップロードを可能にする署名付き URL 発行機能を実装する。
+
+**背景**: Cloud Run の HTTP/1.1 リクエストボディサイズ制限は 32MB 固定で変更不可。フロントエンドが R2 に直接アップロードし、バックエンドには object_key のみを渡すアーキテクチャに変更する。
+
+**参考ドキュメント**: `pose-est-backend/docs/presigned-url-handover.md`
+
+### ⬜ タスク 9-1: 署名付き URL 生成ロジックの実装
+
+- [ ] **9-1a**: `R2StorageService` へのメソッド追加 (`infrastructure/r2_service.py`)
+  - [ ] `generate_presigned_upload_url(object_key, content_type, expires_in=900)` 追加
+  - [ ] SigV4 署名 (既存の `signature_version='s3v4'` 設定を流用)
+  - [ ] Content-Type 制限 (video/\* のみ)
+- [ ] **テスト**: モックを使用した単体テスト
+
+### ⬜ タスク 9-2: アップロード開始エンドポイントの実装
+
+- [ ] **9-2a**: スキーマ定義 (`api/schemas.py`)
+  - [ ] `UploadInitiateRequest(filename, content_type, file_size)`
+  - [ ] `UploadInitiateResponse(upload_url, object_key, expires_in)`
+- [ ] **9-2b**: エンドポイント実装 (`api/routes.py`)
+  - [ ] `POST /api/v1/upload/initiate`
+  - [ ] UUID ベースの object_key 生成
+  - [ ] ファイルサイズ・Content-Type バリデーション
+- [ ] **テスト**: E2E テスト追加
+
+### ⬜ タスク 9-3: 処理エンドポイントの変更
+
+- [ ] **9-3a**: 新スキーマ定義 (`api/schemas.py`)
+  - [ ] `ProcessByKeyRequest(object_key, score_threshold?)`
+- [ ] **9-3b**: エンドポイント変更 (`api/routes.py`)
+  - [ ] `POST /api/v1/process` を object_key ベースに変更
+  - [ ] R2 から直接ファイルをダウンロードして処理
+  - [ ] 互換性のため、既存の multipart/form-data も一定期間サポート (Optional)
+- [ ] **9-3c**: `R2StorageService` にダウンロードメソッド追加
+  - [ ] `download_to_temp(object_key) -> Path`
+- [ ] **テスト**: E2E テスト追加
+
+### ⬜ タスク 9-4: OpenAPI 仕様の更新
+
+- [ ] 新エンドポイント (`/upload/initiate`) の仕様追加
+- [ ] 既存エンドポイント (`/process`) の変更を反映
+- [ ] `docs/openapi.yaml` 再エクスポート
+
+### ⬜ タスク 9-5: 結合テスト
+
+- [ ] Dev 環境での署名付き URL 発行確認
+- [ ] Dev 環境での R2 アップロード → 処理フロー確認
+- [ ] **🛑 [Review] FE/BE 結合動作確認**
